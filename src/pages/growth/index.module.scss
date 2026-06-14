@@ -253,4 +253,151 @@
       }
     }
   }
+
+  .helpedSection {
+    margin-bottom: $spacing-lg;
+
+    .helpedList {
+      background: $color-bg-card;
+      border-radius: $radius-lg;
+      overflow: hidden;
+      box-shadow: $shadow-card;
+
+      .helpedItem {
+        display: flex;
+        align-items: center;
+        padding: $spacing-md $spacing-lg;
+        border-bottom: 1rpx solid $color-border-light;
+        transition: all $transition-fast;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        &:active {
+          background: $color-bg-hover;
+        }
+
+        .helpedAvatar {
+          width: 56rpx;
+          height: 56rpx;
+          border-radius: $radius-round;
+          margin-right: $spacing-md;
+          background: $color-bg-tag;
+        }
+
+        .helpedInfo {
+          flex: 1;
+          min-width: 0;
+
+          .helpedRow {
+            display: flex;
+            align-items: center;
+            gap: $spacing-sm;
+            margin-bottom: 4rpx;
+
+            .helpedName {
+              font-size: $font-size-sm;
+              font-weight: $font-weight-medium;
+              color: $color-text-primary;
+            }
+
+            .helpedTheme {
+              font-size: $font-size-xs;
+              color: $color-text-tertiary;
+            }
+          }
+
+          .helpedContent {
+            font-size: $font-size-xs;
+            color: $color-text-tertiary;
+            @include text-ellipsis;
+          }
+        }
+
+        .helpedTime {
+          font-size: $font-size-xs;
+          color: $color-text-tertiary;
+          margin-left: $spacing-sm;
+          white-space: nowrap;
+        }
+      }
+    }
+  }
+
+  .praisedSection {
+    margin-bottom: $spacing-lg;
+
+    .praisedList {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-md;
+
+      .praisedItem {
+        background: $color-bg-card;
+        border-radius: $radius-lg;
+        padding: $spacing-lg;
+        box-shadow: $shadow-card;
+        transition: all $transition-fast;
+
+        &:active {
+          background: $color-bg-hover;
+        }
+
+        .praisedHeader {
+          display: flex;
+          align-items: center;
+          gap: $spacing-sm;
+          margin-bottom: $spacing-sm;
+
+          .praisedTag {
+            font-size: $font-size-xs;
+            padding: 2rpx 12rpx;
+            border-radius: $radius-xs;
+            background: $color-primary-gradient;
+            color: $color-text-white;
+          }
+
+          .praisedStars {
+            display: flex;
+            gap: 2rpx;
+
+            .star {
+              font-size: 20rpx;
+            }
+          }
+
+          .praisedTheme {
+            font-size: $font-size-xs;
+            color: $color-text-tertiary;
+            margin-left: auto;
+          }
+        }
+
+        .praisedContent {
+          font-size: $font-size-sm;
+          color: $color-text-primary;
+          line-height: $line-height-normal;
+          @include text-ellipsis-multi(2);
+          margin-bottom: $spacing-sm;
+        }
+
+        .praisedFooter {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+
+          .praisedTime {
+            font-size: $font-size-xs;
+            color: $color-text-tertiary;
+          }
+
+          .praisedLink {
+            font-size: $font-size-xs;
+            color: $color-primary;
+          }
+        }
+      }
+    }
+  }
 }

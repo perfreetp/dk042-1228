@@ -75,7 +75,7 @@ const FollowUpPage: React.FC = () => {
       return;
     }
 
-    markFollowUp(troubleId, responseId);
+    markFollowUp(troubleId, responseId, content.trim(), selectedMood || 'calm');
     setTimeout(() => {
       Taro.navigateBack();
     }, 1200);

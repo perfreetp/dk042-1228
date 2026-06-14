@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import classnames from 'classnames';
@@ -7,14 +7,27 @@ import { useApp } from '@/store/AppContext';
 import EmptyState from '@/components/EmptyState';
 import { showModal, formatTime, getToneLabel } from '@/utils';
 
+type FilterMode = 'all' | 'segment' | 'full';
+
 const PAGE_SIZE = 10;
 
 const DraftsPage: React.FC = () => {
   const { drafts, deleteDraft } = useApp();
   const [page, setPage] = useState(1);
+  const [filter, setFilter] = useState<FilterMode>('all');
 
-  const totalPages = Math.ceil(drafts.length / PAGE_SIZE);
-  const pagedDrafts = drafts.slice(0, page * PAGE_SIZE);
+  const filteredDrafts = useMemo(() => {
+    let list = [...drafts];
+    if (filter === 'segment') {
+      list = list.filter((d) => d.mode === 'segment');
+    } else if (filter === 'full') {
+      list = list.filter((d) => d.mode === 'full' || !d.mode);
+    }
+    return list;
+  }, [drafts, filter]);
+
+  const totalPages = Math.ceil(filteredDrafts.length / PAGE_SIZE);
+  const pagedDrafts = filteredDrafts.slice(0, page * PAGE_SIZE);
   const hasMore = page < totalPages;
 
   const handleEdit = (draftId: string) => {
@@ -40,6 +53,11 @@ const DraftsPage: React.FC = () => {
     setPage((p) => Math.min(p + 1, totalPages));
   };
 
+  const handleFilterChange = (newFilter: FilterMode) => {
+    setFilter(newFilter);
+    setPage(1);
+  };
+
   return (
     <ScrollView scrollY className={styles.page}>
       <View className={styles.header}>
@@ -47,10 +65,33 @@ const DraftsPage: React.FC = () => {
         <Text className={styles.count}>{drafts.length} 份草稿</Text>
       </View>
 
-      {drafts.length === 0 ? (
+      {drafts.length > 0 && (
+        <View className={styles.filterBar}>
+          <View
+            className={classnames(styles.filterItem, filter === 'all' && styles.active)}
+            onClick={() => handleFilterChange('all')}
+          >
+            全部 ({drafts.length})
+          </View>
+          <View
+            className={classnames(styles.filterItem, filter === 'segment' && styles.active)}
+            onClick={() => handleFilterChange('segment')}
+          >
+            📋 分段 ({drafts.filter((d) => d.mode === 'segment').length})
+          </View>
+          <View
+            className={classnames(styles.filterItem, filter === 'full' && styles.active)}
+            onClick={() => handleFilterChange('full')}
+          >
+            ✏️ 自由 ({drafts.filter((d) => d.mode === 'full' || !d.mode).length})
+          </View>
+        </View>
+      )}
+
+      {filteredDrafts.length === 0 ? (
         <EmptyState
           emoji="📝"
-          title="暂无草稿"
+          title={filter === 'all' ? '暂无草稿' : `暂无${filter === 'segment' ? '分段模式' : '自由编辑模式'}草稿`}
           desc="在回应编辑器中保存的内容会出现在这里"
         />
       ) : (
@@ -89,7 +130,12 @@ const DraftsPage: React.FC = () => {
               )}
               {draft.mode === 'full' && (
                 <View className={styles.segmentInfo}>
-                  <Text className={styles.segHint}>✏️ 自由编辑模式</Text>
+                  <Text className={styles.segHint}>✏️ 自由编辑模式 · {draft.content.length} 字</Text>
+                </View>
+              )}
+              {!draft.mode && (
+                <View className={styles.segmentInfo}>
+                  <Text className={styles.segHint}>✏️ 自由编辑模式 · {draft.content.length} 字</Text>
                 </View>
               )}
               <View className={styles.cardFooter}>
@@ -100,7 +146,7 @@ const DraftsPage: React.FC = () => {
 
           {hasMore && (
             <View className={styles.loadMore} onClick={handleLoadMore}>
-              加载更多（还有 {drafts.length - pagedDrafts.length} 份草稿）
+              加载更多（还有 {filteredDrafts.length - pagedDrafts.length} 份草稿）
             </View>
           )}
         </View>

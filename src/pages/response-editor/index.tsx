@@ -57,7 +57,9 @@ const ResponseEditorPage: React.FC = () => {
   const [isVoice, setIsVoice] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [voiceDuration, setVoiceDuration] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const recordingTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const playTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialized = useRef(false);
 
   useEffect(() => {
@@ -177,7 +179,7 @@ const ResponseEditorPage: React.FC = () => {
     [checkList]
   );
 
-  const canSubmit = isVoice || pureWordCount >= 20;
+  const canSubmit = (isVoice && voiceDuration >= 2) || (!isVoice && pureWordCount >= 20);
 
   const handleSaveDraft = () => {
     if (!finalText && !isVoice) {
@@ -218,7 +220,7 @@ ${warnCount > 0 ? '建议优化后再发送，效果会更好哦～' : '全部�
 
   const handleSubmit = () => {
     if (!canSubmit) {
-      showToast(isVoice ? '请先录制语音' : '回应内容至少20个字哦');
+      showToast(isVoice ? '语音至少需要2秒' : '回应内容至少20个字哦');
       return;
     }
     if (!trouble) return;
@@ -238,6 +240,7 @@ ${warnCount > 0 ? '建议优化后再发送，效果会更好哦～' : '全部�
         tone,
         isVoice,
         voiceUrl: isVoice ? 'mock_voice.mp3' : undefined,
+        voiceDuration: isVoice ? voiceDuration : undefined,
       });
 
       if (existingDraft?.id) {
@@ -270,6 +273,25 @@ ${warnCount > 0 ? '建议优化后再发送，效果会更好哦～' : '全部�
   const handleDeleteVoice = () => {
     setIsVoice(false);
     setVoiceDuration(0);
+    setIsPlaying(false);
+    if (playTimer.current) {
+      clearTimeout(playTimer.current);
+      playTimer.current = null;
+    }
+  };
+
+  const handlePlayVoice = () => {
+    if (isPlaying) return;
+    setIsPlaying(true);
+    playTimer.current = setTimeout(() => {
+      setIsPlaying(false);
+      playTimer.current = null;
+    }, voiceDuration * 1000);
+  };
+
+  const handleReRecord = () => {
+    handleDeleteVoice();
+    handleStartRecord();
   };
 
   const formatDuration = (sec: number) => {
@@ -369,8 +391,8 @@ ${warnCount > 0 ? '建议优化后再发送，效果会更好哦～' : '全部�
                   </Text>
                   {!isRecording && (
                     <View className={styles.voiceActions}>
-                      <View className={styles.playBtn}>▶️ 播放</View>
-                      <View className={styles.reRecordBtn} onClick={handleStartRecord}>
+                      <View className={styles.playBtn} onClick={handlePlayVoice}>{isPlaying ? '⏸️ 播放中' : '▶️ 播放'}</View>
+                      <View className={styles.reRecordBtn} onClick={handleReRecord}>
                         重录
                       </View>
                       <View className={styles.deleteBtn} onClick={handleDeleteVoice}>

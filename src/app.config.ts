@@ -11,6 +11,7 @@ export default defineAppConfig({
     'pages/action-list/index',
     'pages/follow-up/index',
     'pages/drafts/index',
+    'pages/follow-up-records/index',
   ],
   window: {
     backgroundTextStyle: 'light',

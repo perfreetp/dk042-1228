@@ -23,6 +23,7 @@ const MinePage: React.FC = () => {
     user,
     drafts,
     growthData,
+    followUpRecords,
     togglePauseMatch,
     deleteDraft,
     blockUser,
@@ -31,6 +32,9 @@ const MinePage: React.FC = () => {
   const goRules = () => Taro.navigateTo({ url: '/pages/rules/index' });
   const goDrafts = () => {
     Taro.navigateTo({ url: '/pages/drafts/index' });
+  };
+  const goFollowUpRecords = () => {
+    Taro.navigateTo({ url: '/pages/follow-up-records/index' });
   };
   const goBlocked = () => {
     Taro.showToast({ title: '屏蔽列表功能开发中', icon: 'none' });
@@ -73,7 +77,14 @@ const MinePage: React.FC = () => {
       onClick: goDrafts,
     },
     {
-      icon: '📖',
+      icon: '�',
+      text: '回访记录',
+      value: `${followUpRecords.length} 条`,
+      hasArrow: true,
+      onClick: goFollowUpRecords,
+    },
+    {
+      icon: '��',
       text: '社区规则',
       hasArrow: true,
       onClick: goRules,

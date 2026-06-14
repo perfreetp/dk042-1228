@@ -3,6 +3,7 @@ import { View, Text, Image, ScrollView } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import styles from './index.module.scss';
 import { useApp } from '@/store/AppContext';
+import { formatTime, getToneLabel } from '@/utils';
 
 const moodEmojis = ['😢', '😔', '😐', '🙂', '😊'];
 
@@ -40,47 +41,51 @@ const GrowthPage: React.FC = () => {
     return { path, areaPath, points };
   }, [growthData.moodTrend]);
 
-  const historyItems = useMemo(() => {
-    const allResolved = [...myTroubles, ...troubles].filter(
-      (t) => t.status === 'resolved'
-    );
-    const allReplied = [...troubles].filter(
-      (t) => t.responses.some((r) => r.rating && r.rating >= 4)
-    );
-    return [
-      {
-        id: '1',
-        icon: '💝',
-        title: '帮助了 47 人',
-        desc: '累计送出 47 份温暖',
-        badge: '继续加油',
-      },
-      {
-        id: '2',
-        icon: '⭐',
-        title: '获得 32 次感谢',
-        desc: '你的回应温暖了很多人',
-        badge: `${allReplied.length > 0 ? '本周+' + allReplied.length : ''}`,
-      },
-      {
-        id: '3',
-        icon: '✅',
-        title: '解决了 18 个烦恼',
-        desc: `${allResolved.length} 个问题有了好结果`,
-        badge: '',
-      },
-      {
-        id: '4',
-        icon: '🔥',
-        title: '连续帮助 7 天',
-        desc: '保持这份善意的温度',
-        badge: '连胜中',
-      },
-    ];
-  }, [myTroubles, troubles]);
+  const recentHelped = useMemo(() => {
+    const helped: { troubleId: string; userName: string; userAvatar: string; theme: string; content: string; repliedAt: string }[] = [];
+    troubles.forEach((t) => {
+      t.responses.forEach((r) => {
+        if (r.userId === user.id) {
+          helped.push({
+            troubleId: t.id,
+            userName: t.userName,
+            userAvatar: t.userAvatar,
+            theme: t.theme,
+            content: t.content,
+            repliedAt: r.createdAt,
+          });
+        }
+      });
+    });
+    return helped.slice(0, 5);
+  }, [troubles, user.id]);
+
+  const highRatedResponses = useMemo(() => {
+    const results: { troubleId: string; troubleTheme: string; rating: number; content: string; tone: string; createdAt: string }[] = [];
+    troubles.forEach((t) => {
+      t.responses.forEach((r) => {
+        if (r.userId === user.id && r.rating && r.rating >= 4) {
+          results.push({
+            troubleId: t.id,
+            troubleTheme: t.theme,
+            rating: r.rating,
+            content: r.content,
+            tone: r.tone,
+            createdAt: r.createdAt,
+          });
+        }
+      });
+    });
+    results.sort((a, b) => b.rating - a.rating);
+    return results.slice(0, 5);
+  }, [troubles, user.id]);
 
   const goRules = () => {
     Taro.navigateTo({ url: '/pages/rules/index' });
+  };
+
+  const goTroubleDetail = (troubleId: string) => {
+    Taro.navigateTo({ url: `/pages/trouble-detail/index?troubleId=${troubleId}` });
   };
 
   return (
@@ -194,25 +199,107 @@ const GrowthPage: React.FC = () => {
         </View>
       </View>
 
+      {recentHelped.length > 0 && (
+        <View className={styles.helpedSection}>
+          <Text className={styles.sectionTitle}>最近帮助过的人</Text>
+          <View className={styles.helpedList}>
+            {recentHelped.map((item, idx) => (
+              <View
+                key={idx}
+                className={styles.helpedItem}
+                onClick={() => goTroubleDetail(item.troubleId)}
+              >
+                <Image
+                  className={styles.helpedAvatar}
+                  src={item.userAvatar}
+                  mode="aspectFill"
+                />
+                <View className={styles.helpedInfo}>
+                  <View className={styles.helpedRow}>
+                    <Text className={styles.helpedName}>{item.userName}</Text>
+                    <Text className={styles.helpedTheme}>📌 {item.theme}</Text>
+                  </View>
+                  <Text className={styles.helpedContent}>
+                    {item.content.slice(0, 50)}...
+                  </Text>
+                </View>
+                <Text className={styles.helpedTime}>{formatTime(item.repliedAt)}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {highRatedResponses.length > 0 && (
+        <View className={styles.praisedSection}>
+          <Text className={styles.sectionTitle}>⭐ 收到高分感谢的回复</Text>
+          <View className={styles.praisedList}>
+            {highRatedResponses.map((item, idx) => (
+              <View
+                key={idx}
+                className={styles.praisedItem}
+                onClick={() => goTroubleDetail(item.troubleId)}
+              >
+                <View className={styles.praisedHeader}>
+                  <View className={styles.praisedTag}>
+                    {getToneLabel(item.tone as any)}
+                  </View>
+                  <View className={styles.praisedStars}>
+                    {Array.from({ length: item.rating }).map((_, si) => (
+                      <Text key={si} className={styles.star}>⭐</Text>
+                    ))}
+                  </View>
+                  <Text className={styles.praisedTheme}>📌 {item.troubleTheme}</Text>
+                </View>
+                <Text className={styles.praisedContent}>
+                  {item.content.slice(0, 80)}...
+                </Text>
+                <View className={styles.praisedFooter}>
+                  <Text className={styles.praisedTime}>{formatTime(item.createdAt)}</Text>
+                  <Text className={styles.praisedLink}>查看上下文 →</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
       <View className={styles.historySection}>
         <Text className={styles.sectionTitle}>成就记录</Text>
         <View className={styles.list}>
-          {historyItems.map((item) => (
-            <View
-              key={item.id}
-              className={styles.listItem}
-              onClick={item.id === '1' ? goRules : undefined}
-            >
-              <View className={styles.icon}>{item.icon}</View>
-              <View className={styles.info}>
-                <Text className={styles.title}>{item.title}</Text>
-                <Text className={styles.desc}>{item.desc}</Text>
-              </View>
-              {item.badge && (
-                <View className={styles.badge}>{item.badge}</View>
-              )}
+          <View
+            className={styles.listItem}
+            onClick={goRules}
+          >
+            <View className={styles.icon}>💝</View>
+            <View className={styles.info}>
+              <Text className={styles.title}>帮助了 {growthData.helpCount} 人</Text>
+              <Text className={styles.desc}>累计送出 {growthData.helpCount} 份温暖</Text>
             </View>
-          ))}
+            <View className={styles.badge}>继续加油</View>
+          </View>
+          <View className={styles.listItem}>
+            <View className={styles.icon}>⭐</View>
+            <View className={styles.info}>
+              <Text className={styles.title}>获得 {growthData.thankedCount} 次感谢</Text>
+              <Text className={styles.desc}>你的回应温暖了很多人</Text>
+            </View>
+          </View>
+          <View className={styles.listItem}>
+            <View className={styles.icon}>✅</View>
+            <View className={styles.info}>
+              <Text className={styles.title}>解决了 {growthData.resolveCount} 个烦恼</Text>
+              <Text className={styles.desc}>每个问题都有了好的方向</Text>
+            </View>
+          </View>
+          <View className={styles.listItem}>
+            <View className={styles.icon}>🔥</View>
+            <View className={styles.info}>
+              <Text className={styles.title}>连续帮助 7 天</Text>
+              <Text className={styles.desc}>保持这份善意的温度</Text>
+            </View>
+            <View className={styles.badge}>连胜中</View>
+          </View>
         </View>
       </View>
     </ScrollView>

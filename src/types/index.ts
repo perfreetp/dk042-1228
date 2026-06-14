@@ -59,6 +59,7 @@ export interface Response {
   tone: ToneType;
   isVoice: boolean;
   voiceUrl?: string;
+  voiceDuration?: number;
   createdAt: string;
   rating?: number;
   usefulSentences: number[];
@@ -91,6 +92,19 @@ export interface Draft {
   updatedAt: string;
   mode?: 'segment' | 'full';
   segments?: string[];
+}
+
+export interface FollowUpRecord {
+  id: string;
+  troubleId: string;
+  troubleTheme: TroubleTheme;
+  troubleContent: string;
+  responseId: string;
+  responderName: string;
+  direction: 'sent' | 'received';
+  content: string;
+  mood: string;
+  createdAt: string;
 }
 
 export interface MatchOption {

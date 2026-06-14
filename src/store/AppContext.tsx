@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, ReactNode } from 'react';
 import Taro from '@tarojs/taro';
-import type { Trouble, Response, UserProfile, GrowthData, Draft, ActionItem } from '@/types';
+import type { Trouble, Response, UserProfile, GrowthData, Draft, ActionItem, FollowUpRecord } from '@/types';
 import { mockTroubles, mockMyTroubles } from '@/data/mockTroubles';
 import { mockGrowthData, mockUserProfile } from '@/data/mockGrowth';
 import { uid, showToast } from '@/utils';
@@ -11,6 +11,7 @@ interface AppState {
   myTroubles: Trouble[];
   drafts: Draft[];
   growthData: GrowthData;
+  followUpRecords: FollowUpRecord[];
 }
 
 interface AppContextValue extends AppState {
@@ -18,7 +19,7 @@ interface AppContextValue extends AppState {
   addResponse: (troubleId: string, response: Omit<Response, 'id' | 'createdAt' | 'usefulSentences'>) => void;
   rateResponse: (troubleId: string, responseId: string, rating: number) => void;
   markUseful: (troubleId: string, responseId: string, sentenceIndex: number) => void;
-  markFollowUp: (troubleId: string, responseId: string) => void;
+  markFollowUp: (troubleId: string, responseId: string, content: string, mood: string) => void;
   toggleActionItem: (troubleId: string, itemId: string) => void;
   addActionItems: (troubleId: string, items: string[]) => void;
   deleteActionItem: (troubleId: string, itemId: string) => void;
@@ -38,6 +39,7 @@ const defaultState: AppState = {
   myTroubles: mockMyTroubles,
   drafts: [],
   growthData: mockGrowthData,
+  followUpRecords: [],
 };
 
 const loadState = (): AppState => {
@@ -51,6 +53,7 @@ const loadState = (): AppState => {
         myTroubles: saved.myTroubles || defaultState.myTroubles,
         drafts: saved.drafts || defaultState.drafts,
         growthData: saved.growthData || defaultState.growthData,
+        followUpRecords: saved.followUpRecords || defaultState.followUpRecords,
       };
     }
   } catch (_e) {
@@ -205,8 +208,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
   }, []);
 
-  const markFollowUp = useCallback((troubleId: string, responseId: string) => {
+  const markFollowUp = useCallback((troubleId: string, responseId: string, content: string, mood: string) => {
     setState((s) => {
+      const allTroubles = [...s.troubles, ...s.myTroubles];
+      const trouble = allTroubles.find((t) => t.id === troubleId);
+      const response = trouble?.responses.find((r) => r.id === responseId);
+
+      const sentRecord: FollowUpRecord = {
+        id: uid(),
+        troubleId,
+        troubleTheme: trouble?.theme || '其他',
+        troubleContent: trouble?.content || '',
+        responseId,
+        responderName: response?.userName || '',
+        direction: 'sent',
+        content,
+        mood,
+        createdAt: new Date().toISOString(),
+      };
+
+      const receivedRecord: FollowUpRecord = {
+        ...sentRecord,
+        id: uid(),
+        direction: 'received',
+      };
+
       const updateFn = (list: Trouble[]): Trouble[] =>
         list.map((t) =>
           t.id === troubleId
@@ -217,10 +243,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               }
             : t
         );
+
       return {
         ...s,
         troubles: updateFn(s.troubles),
         myTroubles: updateFn(s.myTroubles),
+        followUpRecords: [sentRecord, receivedRecord, ...s.followUpRecords],
       };
     });
     showToast('回访已发送，感谢你的反馈 💌', 'success');

@@ -31,8 +31,15 @@ const ResponseCard: React.FC<ResponseCardProps> = ({
 }) => {
   const [hoveredRating, setHoveredRating] = useState(0);
   const [currentRating, setCurrentRating] = useState(response.rating || 0);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const sentences = response.content.split(/[。！？!?\n]+/).filter((s) => s.trim());
+
+  const handlePlayVoice = () => {
+    if (isPlaying) return;
+    setIsPlaying(true);
+    setTimeout(() => setIsPlaying(false), (response.voiceDuration || 5) * 1000);
+  };
 
   const handleRate = (rating: number) => {
     if (!onRate) return;
@@ -73,20 +80,63 @@ const ResponseCard: React.FC<ResponseCardProps> = ({
         )}
       </View>
 
-      <View className={styles.content}>
-        {sentences.map((sentence, idx) => (
-          <Text
-            key={idx}
-            className={classnames(
-              styles.sentence,
-              response.usefulSentences.includes(idx) && styles.useful
-            )}
-            onClick={() => onMarkUseful?.(idx)}
-          >
-            {sentence.trim()}。
-          </Text>
-        ))}
-      </View>
+      {response.isVoice ? (
+        <View className={styles.voicePlayer}>
+          <View className={styles.voiceWaveform}>
+            {[...Array(24)].map((_, i) => (
+              <View
+                key={i}
+                className={classnames(styles.voiceBar, isPlaying && styles.playing)}
+                style={{
+                  height: `${16 + (i % 7) * 10}rpx`,
+                  animationDelay: `${i * 0.08}s`,
+                }}
+              />
+            ))}
+          </View>
+          <View className={styles.voiceControls}>
+            <View className={styles.playBtn} onClick={handlePlayVoice}>
+              {isPlaying ? '⏸️' : '▶️'}
+            </View>
+            <Text className={styles.duration}>
+              {Math.floor((response.voiceDuration || 0) / 60).toString().padStart(2, '0')}:
+              {((response.voiceDuration || 0) % 60).toString().padStart(2, '0')}
+            </Text>
+            <Text className={styles.voiceLabel}>语音消息</Text>
+          </View>
+        </View>
+      ) : (
+        <View className={styles.content}>
+          {sentences.map((sentence, idx) => (
+            <Text
+              key={idx}
+              className={classnames(
+                styles.sentence,
+                response.usefulSentences.includes(idx) && styles.useful
+              )}
+              onClick={() => onMarkUseful?.(idx)}
+            >
+              {sentence.trim()}。
+            </Text>
+          ))}
+        </View>
+      )}
+      {response.isVoice && response.content && response.content !== '[语音消息]' && (
+        <View className={styles.content}>
+          {sentences.map((sentence, idx) => (
+            <Text
+              key={idx}
+              className={classnames(
+                styles.sentence,
+                response.usefulSentences.includes(idx) && styles.useful
+              )}
+              onClick={() => onMarkUseful?.(idx)}
+            >
+              {sentence.trim()}。
+            </Text>
+          ))}
+        </View>
+      )}
 
       <View className={styles.actions}>
         <View className={styles.left}>
