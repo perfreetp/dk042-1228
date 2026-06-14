@@ -62,14 +62,18 @@ const ResponseEditorPage: React.FC = () => {
 
   useEffect(() => {
     if (initialized.current) return;
-    if (existingDraft) {
-      setTone(existingDraft.tone);
-      setFullText(existingDraft.content);
-      const seg = existingDraft.content.split(/\n\n【.*?】\n/);
-      if (seg.length >= 2 || existingDraft.content.includes('【表达理解】')) {
+    if (!existingDraft) return;
+
+    setTone(existingDraft.tone);
+
+    if (existingDraft.mode === 'segment' && existingDraft.segments) {
+      setSegments(existingDraft.segments);
+      setMode('segment');
+    } else if (existingDraft.mode === 'full' || !existingDraft.mode) {
+      if (existingDraft.content.includes('【表达理解】') && existingDraft.mode !== 'full') {
         const extracted: string[] = [];
         segmentTemplates.forEach((tpl) => {
-          const regex = new RegExp(`【${tpl.label}】\([\\s\\S]*?)(?=\n\n【|$)`);
+          const regex = new RegExp(`【${tpl.label}】[\\s\\S]*?\\n([\\s\\S]*?)(?=\\n\\n【|$)`);
           const match = existingDraft.content.match(regex);
           extracted.push(match ? match[1].trim() : '');
         });
@@ -77,14 +81,17 @@ const ResponseEditorPage: React.FC = () => {
           setSegments(extracted);
           setMode('segment');
         } else {
+          setFullText(existingDraft.content);
           setMode('full');
         }
       } else {
+        setFullText(existingDraft.content);
         setMode('full');
       }
-      setShowCheck(false);
-      initialized.current = true;
     }
+
+    setShowCheck(false);
+    initialized.current = true;
   }, [existingDraft]);
 
   const combinedText = useMemo(() => {
@@ -102,11 +109,14 @@ const ResponseEditorPage: React.FC = () => {
   }, [mode, segments, fullText]);
 
   const finalText = combinedText;
-  const wordCount = finalText.length;
+
   const segmentWordCount = useMemo(
     () => segments.reduce((sum, s) => sum + s.length, 0),
     [segments]
   );
+
+  const pureWordCount = mode === 'segment' ? segmentWordCount : fullText.trim().length;
+  const displayWordCount = pureWordCount;
 
   const checkList = useMemo(() => {
     return [
@@ -120,11 +130,12 @@ const ResponseEditorPage: React.FC = () => {
         check: () => {
           if (!trouble) return 'none';
           if (isVoice) return 'pass';
+          const wc = pureWordCount;
           if (trouble.expectedLength === 'short')
-            return wordCount > 0 && wordCount <= 120 ? 'pass' : wordCount > 120 ? 'warn' : 'none';
+            return wc > 0 && wc <= 120 ? 'pass' : wc > 120 ? 'warn' : 'none';
           if (trouble.expectedLength === 'long')
-            return wordCount >= 280 ? 'pass' : wordCount > 0 ? 'warn' : 'none';
-          return wordCount >= 100 ? 'pass' : wordCount > 0 ? 'warn' : 'none';
+            return wc >= 280 ? 'pass' : wc > 0 ? 'warn' : 'none';
+          return wc >= 100 ? 'pass' : wc > 0 ? 'warn' : 'none';
         },
       },
       {
@@ -134,7 +145,7 @@ const ResponseEditorPage: React.FC = () => {
           if (isVoice) return 'pass';
           const keywords = ['理解', '明白', '懂', '感受', '经历', '同感', '我也'];
           const has = keywords.some((k) => finalText.includes(k));
-          return has ? 'pass' : wordCount > 50 ? 'warn' : 'none';
+          return has ? 'pass' : pureWordCount > 50 ? 'warn' : 'none';
         },
       },
       {
@@ -144,7 +155,7 @@ const ResponseEditorPage: React.FC = () => {
           if (isVoice) return 'none';
           const badWords = ['你应该', '你错', '你不对', '必须', '活该', '你怎么'];
           const has = badWords.some((w) => finalText.includes(w));
-          return has ? 'warn' : wordCount > 0 ? 'pass' : 'none';
+          return has ? 'warn' : pureWordCount > 0 ? 'pass' : 'none';
         },
       },
       {
@@ -152,21 +163,21 @@ const ResponseEditorPage: React.FC = () => {
         desc: trouble?.needSolution ? '对方希望获得可操作的建议' : '不用硬给建议，真诚就好',
         check: () => {
           if (isVoice) return 'pass';
-          if (!trouble?.needSolution) return wordCount > 0 ? 'pass' : 'none';
+          if (!trouble?.needSolution) return pureWordCount > 0 ? 'pass' : 'none';
           const keywords = ['建议', '试试', '可以', '方法', '先', '然后', '不如'];
           const has = keywords.some((k) => finalText.includes(k));
-          return has ? 'pass' : wordCount > 50 ? 'warn' : 'none';
+          return has ? 'pass' : pureWordCount > 50 ? 'warn' : 'none';
         },
       },
     ];
-  }, [trouble, wordCount, finalText, isVoice]);
+  }, [trouble, pureWordCount, finalText, isVoice]);
 
   const allPass = useMemo(
     () => checkList.every((c) => c.check() !== 'warn'),
     [checkList]
   );
 
-  const canSubmit = isVoice || wordCount >= 20;
+  const canSubmit = isVoice || pureWordCount >= 20;
 
   const handleSaveDraft = () => {
     if (!finalText && !isVoice) {
@@ -179,6 +190,8 @@ const ResponseEditorPage: React.FC = () => {
       troubleId,
       content: finalText,
       tone,
+      mode,
+      segments: mode === 'segment' ? segments : undefined,
     });
   };
 
@@ -385,7 +398,7 @@ ${warnCount > 0 ? '建议优化后再发送，效果会更好哦～' : '全部�
           ✍️ 编辑回应
           <Text className={styles.hint}>
             已输入 <Text style={{ color: '#7C9EFF', fontWeight: 600 }}>
-              {mode === 'segment' ? segmentWordCount : wordCount}
+              {displayWordCount}
             </Text> 字
           </Text>
         </Text>
@@ -474,7 +487,7 @@ ${warnCount > 0 ? '建议优化后再发送，效果会更好哦～' : '全部�
                   ))}
                 </View>
                 <View className={styles.charCount}>
-                  合计 {segmentWordCount} 字（合成后约 {wordCount} 字含标题）
+                  正文 {segmentWordCount} 字
                 </View>
               </>
             ) : (
@@ -489,7 +502,7 @@ ${warnCount > 0 ? '建议优化后再发送，效果会更好哦～' : '全部�
                   autoHeight
                   placeholderStyle="color: #C9CDD4"
                 />
-                <View className={styles.charCount}>{wordCount}/2000</View>
+                <View className={styles.charCount}>{displayWordCount}/2000</View>
               </View>
             )}
           </View>

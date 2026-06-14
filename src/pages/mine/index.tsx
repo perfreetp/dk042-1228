@@ -30,7 +30,7 @@ const MinePage: React.FC = () => {
 
   const goRules = () => Taro.navigateTo({ url: '/pages/rules/index' });
   const goDrafts = () => {
-    Taro.showToast({ title: '草稿箱功能开发中', icon: 'none' });
+    Taro.navigateTo({ url: '/pages/drafts/index' });
   };
   const goBlocked = () => {
     Taro.showToast({ title: '屏蔽列表功能开发中', icon: 'none' });

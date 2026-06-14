@@ -237,7 +237,7 @@ const TroubleDetailPage: React.FC = () => {
             response={r}
             troubleId={trouble.id}
             showRateAction={isOwner}
-            showFollowUp={isOwner}
+            showFollowUp={isOwner && !trouble.isFollowedUp}
             onRate={(rating) => handleRate(r.id, rating)}
             onMarkUseful={(idx) => handleMarkUseful(r.id, idx)}
             onFollowUp={() => handleFollowUp(r.id)}

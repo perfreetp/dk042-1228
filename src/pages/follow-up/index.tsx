@@ -50,7 +50,7 @@ const FollowUpPage: React.FC = () => {
     );
   }
 
-  const isFollowedUp = response.hasFollowUp;
+  const isFollowedUp = trouble.isFollowedUp || response.hasFollowUp;
 
   const handlePhraseClick = (phrase: string) => {
     const newContent = content ? `${content}\n${phrase}` : phrase;

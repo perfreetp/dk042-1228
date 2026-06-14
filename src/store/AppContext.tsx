@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, ReactNode } from 'react';
+import Taro from '@tarojs/taro';
 import type { Trouble, Response, UserProfile, GrowthData, Draft, ActionItem } from '@/types';
 import { mockTroubles, mockMyTroubles } from '@/data/mockTroubles';
 import { mockGrowthData, mockUserProfile } from '@/data/mockGrowth';
@@ -29,6 +30,35 @@ interface AppContextValue extends AppState {
   reportContent: (type: string, id: string, reason: string) => void;
 }
 
+const STORAGE_KEY = 'trouble_exchange_state';
+
+const defaultState: AppState = {
+  user: mockUserProfile,
+  troubles: mockTroubles,
+  myTroubles: mockMyTroubles,
+  drafts: [],
+  growthData: mockGrowthData,
+};
+
+const loadState = (): AppState => {
+  try {
+    const raw = Taro.getStorageSync(STORAGE_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      return {
+        user: saved.user || defaultState.user,
+        troubles: saved.troubles || defaultState.troubles,
+        myTroubles: saved.myTroubles || defaultState.myTroubles,
+        drafts: saved.drafts || defaultState.drafts,
+        growthData: saved.growthData || defaultState.growthData,
+      };
+    }
+  } catch (_e) {
+    // ignore
+  }
+  return defaultState;
+};
+
 const AppContext = createContext<AppContextValue | null>(null);
 
 export const useApp = (): AppContextValue => {
@@ -38,21 +68,15 @@ export const useApp = (): AppContextValue => {
 };
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<AppState>({
-    user: mockUserProfile,
-    troubles: mockTroubles,
-    myTroubles: mockMyTroubles,
-    drafts: [
-      {
-        id: uid(),
-        troubleId: mockTroubles[0].id,
-        content: '我之前考研的时候也很焦虑，后来发现一个方法...',
-        tone: 'empathetic',
-        updatedAt: new Date().toISOString(),
-      },
-    ],
-    growthData: mockGrowthData,
-  });
+  const [state, setState] = useState<AppState>(loadState);
+
+  useEffect(() => {
+    try {
+      Taro.setStorageSync(STORAGE_KEY, JSON.stringify(state));
+    } catch (_e) {
+      // ignore
+    }
+  }, [state]);
 
   const submitTrouble = useCallback(
     (data: Omit<Trouble, 'id' | 'userId' | 'responses' | 'createdAt' | 'status'>) => {
@@ -189,9 +213,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ? {
                 ...t,
                 isFollowedUp: true,
-                responses: t.responses.map((r) =>
-                  r.id === responseId ? { ...r, hasFollowUp: true } : r
-                ),
+                responses: t.responses.map((r) => ({ ...r, hasFollowUp: true })),
               }
             : t
         );
@@ -285,6 +307,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         content: draft.content || '',
         tone: draft.tone || 'warm',
         updatedAt: new Date().toISOString(),
+        mode: draft.mode,
+        segments: draft.segments,
       };
       return { ...s, drafts: [newDraft, ...s.drafts] };
     });

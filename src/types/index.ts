@@ -89,6 +89,8 @@ export interface Draft {
   content: string;
   tone: ToneType;
   updatedAt: string;
+  mode?: 'segment' | 'full';
+  segments?: string[];
 }
 
 export interface MatchOption {

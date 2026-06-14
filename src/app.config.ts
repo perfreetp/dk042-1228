@@ -10,6 +10,7 @@ export default defineAppConfig({
     'pages/rules/index',
     'pages/action-list/index',
     'pages/follow-up/index',
+    'pages/drafts/index',
   ],
   window: {
     backgroundTextStyle: 'light',
