@@ -214,6 +214,28 @@
   }
 }
 
+.presetList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 16rpx;
+  padding: 0 8rpx;
+}
+
+.presetItem {
+  padding: 16rpx 28rpx;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  color: #F59E0B;
+  transition: all 0.2s ease;
+
+  &:active {
+    background: rgba(245, 158, 11, 0.2);
+    transform: scale(0.97);
+  }
+}
+
 .addSection {
   position: fixed;
   left: 0;
@@ -252,6 +274,16 @@
       font-size: 40rpx;
       font-weight: 300;
       box-shadow: 0 8rpx 24rpx rgba(124, 158, 255, 0.4);
+      transition: all 0.2s ease;
+
+      &.disabled {
+        background: #d1d5db;
+        box-shadow: none;
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
     }
   }
 

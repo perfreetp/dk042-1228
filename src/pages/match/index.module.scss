@@ -11,6 +11,7 @@
     margin-bottom: $spacing-xl;
 
     .optionCard {
+      position: relative;
       background: $color-bg-card;
       border-radius: $radius-lg;
       padding: $spacing-lg $spacing-sm;
@@ -25,7 +26,17 @@
 
       &.active {
         border-color: $color-primary;
-        box-shadow: 0 4rpx 20rpx rgba(124, 158, 255, 0.2);
+        box-shadow: 0 4rpx 20rpx rgba(124, 158, 255, 0.25);
+      }
+
+      .tag {
+        position: absolute;
+        top: $spacing-sm;
+        right: $spacing-sm;
+        padding: 4rpx 14rpx;
+        border-radius: $radius-xs;
+        font-size: 18rpx;
+        font-weight: $font-weight-medium;
       }
 
       .icon {
@@ -41,9 +52,20 @@
       }
 
       .desc {
-        font-size: $font-size-xs;
+        font-size: 22rpx;
         color: $color-text-tertiary;
         line-height: $line-height-tight;
+        margin-bottom: $spacing-xs;
+      }
+
+      .count {
+        font-size: 20rpx;
+        color: $color-primary;
+        background: rgba(124, 158, 255, 0.1);
+        padding: 4rpx 16rpx;
+        border-radius: $radius-xs;
+        display: inline-block;
+        font-weight: $font-weight-medium;
       }
     }
   }

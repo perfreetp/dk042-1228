@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Input, Button } from '@tarojs/components';
-import Taro, { useRouter } from '@tarojs/taro';
+import { View, Text, ScrollView, Input } from '@tarojs/components';
+import Taro, { useRouter, useDidShow } from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 import { useApp } from '@/store/AppContext';
@@ -10,9 +10,15 @@ import type { Trouble } from '@/types';
 
 const ActionListPage: React.FC = () => {
   const router = useRouter();
-  const troubleId = router.params.troubleId;
+  const troubleId = router.params.troubleId || '';
 
-  const { myTroubles, toggleActionItem, addActionItems, troubles } = useApp();
+  const {
+    myTroubles,
+    troubles,
+    toggleActionItem,
+    addActionItems,
+    deleteActionItem,
+  } = useApp();
 
   const trouble = useMemo<Trouble | undefined>(() => {
     const all = [...myTroubles, ...troubles];
@@ -42,19 +48,19 @@ const ActionListPage: React.FC = () => {
       return;
     }
 
-    const items = text
+    const list = text
       .split(/[，,\n]/)
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
 
-    if (items.length === 0) {
+    if (list.length === 0) {
       showToast('请输入有效内容');
       return;
     }
 
-    addActionItems(trouble.id, items);
+    addActionItems(trouble.id, list);
     setNewAction('');
-    showToast(`已添加 ${items.length} 个行动项`);
+    showToast(`已添加 ${list.length} 个行动项`);
   };
 
   const handleToggle = (itemId: string) => {
@@ -63,9 +69,10 @@ const ActionListPage: React.FC = () => {
 
   const handleDelete = (itemId: string, e) => {
     e.stopPropagation();
-    showModal('删除行动项', '确定要删除这个行动项吗？').then((confirm) => {
+    showModal('删除行动项', '确定要删除这个行动项吗？删除后无法恢复。').then((confirm) => {
       if (confirm) {
-        showToast('删除成功');
+        deleteActionItem(trouble.id, itemId);
+        showToast('已删除');
       }
     });
   };
@@ -75,7 +82,7 @@ const ActionListPage: React.FC = () => {
     '今天先完成第一步',
     '写下3个可以求助的人',
     '设定一个截止时间',
-    '奖励自己完成后做喜欢的事',
+    '完成后奖励自己',
   ];
 
   const handleQuickAdd = (text: string) => {
@@ -175,17 +182,11 @@ const ActionListPage: React.FC = () => {
             <View className={styles.sectionHeader}>
               <Text className={styles.title}>💡 快速添加建议</Text>
             </View>
-            <View style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 8 }}>
+            <View className={styles.presetList}>
               {presetActions.map((action, idx) => (
                 <View
                   key={idx}
-                  style={{
-                    padding: '16rpx 28rpx',
-                    background: 'rgba(245, 158, 11, 0.1)',
-                    borderRadius: 32,
-                    fontSize: 26,
-                    color: '#F59E0B',
-                  }}
+                  className={styles.presetItem}
                   onClick={() => handleQuickAdd(action)}
                 >
                   + {action}
@@ -196,7 +197,7 @@ const ActionListPage: React.FC = () => {
         )}
       </View>
 
-      <View style={{ height: 200 }} />
+      <View style={{ height: 220 }} />
 
       <View className={styles.addSection}>
         <View className={styles.inputRow}>
@@ -208,7 +209,10 @@ const ActionListPage: React.FC = () => {
             confirmType="send"
             onConfirm={handleAdd}
           />
-          <View className={styles.addBtn} onClick={handleAdd}>
+          <View
+            className={classnames(styles.addBtn, !newAction.trim() && styles.disabled)}
+            onClick={handleAdd}
+          >
             +
           </View>
         </View>

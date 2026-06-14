@@ -29,7 +29,7 @@ const FollowUpPage: React.FC = () => {
   const responseId = router.params.responseId;
   const troubleId = router.params.troubleId;
 
-  const { troubles, myTroubles } = useApp();
+  const { troubles, myTroubles, markFollowUp } = useApp();
 
   const { trouble, response } = useMemo(() => {
     const allTroubles: Trouble[] = [...myTroubles, ...troubles];
@@ -60,6 +60,11 @@ const FollowUpPage: React.FC = () => {
   };
 
   const handleSend = () => {
+    if (isFollowedUp) {
+      showToast('你已经回访过啦');
+      return;
+    }
+
     if (!selectedMood) {
       showToast('请选择现在的心情');
       return;
@@ -70,10 +75,10 @@ const FollowUpPage: React.FC = () => {
       return;
     }
 
-    showToast('回访已发送，感谢你的反馈 💌');
+    markFollowUp(troubleId, responseId);
     setTimeout(() => {
       Taro.navigateBack();
-    }, 1500);
+    }, 1200);
   };
 
   const handleCancel = () => {

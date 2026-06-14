@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { View, Text, Image, Textarea, Button, ScrollView } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import classnames from 'classnames';
@@ -24,35 +24,68 @@ const segmentTemplates = [
 const ResponseEditorPage: React.FC = () => {
   const router = useRouter();
   const troubleId = router.params.troubleId;
-  const draftId = router.params.draftId;
+  const draftIdFromUrl = router.params.draftId;
 
-  const { troubles, myTroubles, user, drafts, saveDraft, deleteDraft, addResponse } = useApp();
+  const {
+    troubles,
+    myTroubles,
+    user,
+    drafts,
+    saveDraft,
+    deleteDraft,
+    addResponse,
+    getDraftByTroubleId,
+  } = useApp();
 
   const trouble = useMemo<Trouble | undefined>(() => {
     const all = [...troubles, ...myTroubles];
     return all.find((t) => t.id === troubleId);
   }, [troubleId, troubles, myTroubles]);
 
-  const draft = useMemo(() => drafts.find((d) => d.id === draftId), [draftId, drafts]);
+  const existingDraft = useMemo(() => {
+    if (draftIdFromUrl) {
+      return drafts.find((d) => d.id === draftIdFromUrl);
+    }
+    return getDraftByTroubleId(troubleId || '');
+  }, [draftIdFromUrl, troubleId, drafts, getDraftByTroubleId]);
 
-  const [tone, setTone] = useState<ToneType>(draft?.tone || 'warm');
+  const [tone, setTone] = useState<ToneType>('warm');
   const [mode, setMode] = useState<'segment' | 'full'>('segment');
   const [segments, setSegments] = useState<string[]>(['', '', '', '']);
   const [fullText, setFullText] = useState('');
   const [showCheck, setShowCheck] = useState(false);
+  const [isVoice, setIsVoice] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceDuration, setVoiceDuration] = useState(0);
+  const recordingTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const initialized = useRef(false);
 
   useEffect(() => {
-    if (draft?.content) {
-      setFullText(draft.content);
-      const seg = draft.content.split(/\n\n+/);
-      if (seg.length >= 2) {
-        setMode('segment');
-        setSegments(seg.slice(0, 4).concat(Array(Math.max(0, 4 - seg.length)).fill('')));
+    if (initialized.current) return;
+    if (existingDraft) {
+      setTone(existingDraft.tone);
+      setFullText(existingDraft.content);
+      const seg = existingDraft.content.split(/\n\n【.*?】\n/);
+      if (seg.length >= 2 || existingDraft.content.includes('【表达理解】')) {
+        const extracted: string[] = [];
+        segmentTemplates.forEach((tpl) => {
+          const regex = new RegExp(`【${tpl.label}】\([\\s\\S]*?)(?=\n\n【|$)`);
+          const match = existingDraft.content.match(regex);
+          extracted.push(match ? match[1].trim() : '');
+        });
+        if (extracted.some((s) => s.length > 0)) {
+          setSegments(extracted);
+          setMode('segment');
+        } else {
+          setMode('full');
+        }
       } else {
         setMode('full');
       }
+      setShowCheck(false);
+      initialized.current = true;
     }
-  }, [draft]);
+  }, [existingDraft]);
 
   const combinedText = useMemo(() => {
     if (mode === 'segment') {
@@ -60,7 +93,7 @@ const ResponseEditorPage: React.FC = () => {
         .map((s, i) => {
           const tpl = segmentTemplates[i];
           if (!s.trim()) return '';
-          return tpl ? `【${tpl.label}】\n${s.trim()}` : s.trim();
+          return `【${tpl.label}】\n${s.trim()}`;
         })
         .filter((s) => s)
         .join('\n\n');
@@ -68,8 +101,12 @@ const ResponseEditorPage: React.FC = () => {
     return fullText.trim();
   }, [mode, segments, fullText]);
 
-  const finalContent = combinedText;
+  const finalText = combinedText;
   const wordCount = finalText.length;
+  const segmentWordCount = useMemo(
+    () => segments.reduce((sum, s) => sum + s.length, 0),
+    [segments]
+  );
 
   const checkList = useMemo(() => {
     return [
@@ -82,6 +119,7 @@ const ResponseEditorPage: React.FC = () => {
           : '适中长度（100-300字）',
         check: () => {
           if (!trouble) return 'none';
+          if (isVoice) return 'pass';
           if (trouble.expectedLength === 'short')
             return wordCount > 0 && wordCount <= 120 ? 'pass' : wordCount > 120 ? 'warn' : 'none';
           if (trouble.expectedLength === 'long')
@@ -93,7 +131,8 @@ const ResponseEditorPage: React.FC = () => {
         title: '包含理解/共情',
         desc: '先表达理解，更容易让对方接受',
         check: () => {
-          const keywords = ['理解', '明白', '懂', '感受', '经历', '同感'];
+          if (isVoice) return 'pass';
+          const keywords = ['理解', '明白', '懂', '感受', '经历', '同感', '我也'];
           const has = keywords.some((k) => finalText.includes(k));
           return has ? 'pass' : wordCount > 50 ? 'warn' : 'none';
         },
@@ -102,7 +141,8 @@ const ResponseEditorPage: React.FC = () => {
         title: '避免评判性语言',
         desc: '不要用"你应该""你错了"等词语',
         check: () => {
-          const badWords = ['你应该', '你错', '你不对', '必须', '活该'];
+          if (isVoice) return 'none';
+          const badWords = ['你应该', '你错', '你不对', '必须', '活该', '你怎么'];
           const has = badWords.some((w) => finalText.includes(w));
           return has ? 'warn' : wordCount > 0 ? 'pass' : 'none';
         },
@@ -111,27 +151,29 @@ const ResponseEditorPage: React.FC = () => {
         title: trouble?.needSolution ? '包含具体建议' : '真诚表达即可',
         desc: trouble?.needSolution ? '对方希望获得可操作的建议' : '不用硬给建议，真诚就好',
         check: () => {
+          if (isVoice) return 'pass';
           if (!trouble?.needSolution) return wordCount > 0 ? 'pass' : 'none';
-          const keywords = ['建议', '试试', '可以', '方法', '先', '然后'];
+          const keywords = ['建议', '试试', '可以', '方法', '先', '然后', '不如'];
           const has = keywords.some((k) => finalText.includes(k));
           return has ? 'pass' : wordCount > 50 ? 'warn' : 'none';
         },
       },
     ];
-  }, [trouble, wordCount, finalText]);
+  }, [trouble, wordCount, finalText, isVoice]);
 
   const allPass = useMemo(
     () => checkList.every((c) => c.check() !== 'warn'),
     [checkList]
   );
 
-  const canSubmit = wordCount >= 20;
+  const canSubmit = isVoice || wordCount >= 20;
 
   const handleSaveDraft = () => {
-    if (!finalText) {
+    if (!finalText && !isVoice) {
       showToast('内容不能为空');
       return;
     }
+    const draftId = existingDraft?.id;
     saveDraft({
       id: draftId,
       troubleId,
@@ -145,10 +187,12 @@ const ResponseEditorPage: React.FC = () => {
     const passCount = checkList.filter((c) => c.check() === 'pass').length;
     const warnCount = checkList.filter((c) => c.check() === 'warn').length;
     Taro.showModal({
-      title: '自检结果',
+      title: '🔍 自检结果',
       content: `通过 ${passCount}/${checkList.length} 项${
         warnCount > 0 ? `，有 ${warnCount} 项建议优化` : ''
-      }`,
+      }
+
+${warnCount > 0 ? '建议优化后再发送，效果会更好哦～' : '全部通过，可以发送啦！'}`,
       confirmText: warnCount > 0 ? '继续修改' : '确认发送',
       cancelText: '关闭',
       success: (res) => {
@@ -161,14 +205,14 @@ const ResponseEditorPage: React.FC = () => {
 
   const handleSubmit = () => {
     if (!canSubmit) {
-      showToast('回应内容至少20个字哦');
+      showToast(isVoice ? '请先录制语音' : '回应内容至少20个字哦');
       return;
     }
     if (!trouble) return;
 
     showModal(
       '确认发送',
-      `你的回应将发送给「${trouble.userName}」，确认发送吗？`
+      `你的${isVoice ? '语音' : '文字'}回应将发送给「${trouble.userName}」，确认发送吗？`
     ).then((confirm) => {
       if (!confirm) return;
 
@@ -177,17 +221,48 @@ const ResponseEditorPage: React.FC = () => {
         userId: user.id,
         userName: user.nickname,
         userAvatar: user.avatar,
-        content: finalText,
+        content: finalText || '[语音消息]',
         tone,
-        isVoice: false,
+        isVoice,
+        voiceUrl: isVoice ? 'mock_voice.mp3' : undefined,
       });
 
-      if (draftId) deleteDraft(draftId);
+      if (existingDraft?.id) {
+        deleteDraft(existingDraft.id);
+      }
 
       setTimeout(() => {
         Taro.navigateBack();
-      }, 600);
+      }, 800);
     });
+  };
+
+  const handleStartRecord = () => {
+    setIsRecording(true);
+    setIsVoice(true);
+    setVoiceDuration(0);
+    recordingTimer.current = setInterval(() => {
+      setVoiceDuration((d) => d + 1);
+    }, 1000);
+  };
+
+  const handleStopRecord = () => {
+    setIsRecording(false);
+    if (recordingTimer.current) {
+      clearInterval(recordingTimer.current);
+      recordingTimer.current = null;
+    }
+  };
+
+  const handleDeleteVoice = () => {
+    setIsVoice(false);
+    setVoiceDuration(0);
+  };
+
+  const formatDuration = (sec: number) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
   if (!trouble) {
@@ -198,6 +273,8 @@ const ResponseEditorPage: React.FC = () => {
     );
   }
 
+  const allowVoice = trouble.allowVoice;
+
   return (
     <ScrollView scrollY className={styles.editorPage}>
       <View className={styles.troublePreview}>
@@ -207,8 +284,13 @@ const ResponseEditorPage: React.FC = () => {
             src={trouble.userAvatar}
             mode="aspectFill"
           />
-          <Text className={styles.name}>{trouble.userName}</Text>
-          <View className={styles.theme}>{trouble.theme}</View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text className={styles.name}>{trouble.userName}</Text>
+            <Text className={styles.time}>{trouble.userAge}岁 · {trouble.theme}</Text>
+          </View>
+          {allowVoice && (
+            <View className={styles.voiceTag}>🎵 可语音</View>
+          )}
         </View>
         <Text className={styles.content}>{trouble.content}</Text>
       </View>
@@ -235,79 +317,183 @@ const ResponseEditorPage: React.FC = () => {
         </View>
       </View>
 
-      <View className={styles.section}>
-        <Text className={styles.sectionTitle}>✍️ 编辑回应</Text>
-
-        <View className={styles.modeSwitch}>
-          <View
-            className={classnames(styles.modeItem, mode === 'segment' && styles.active)}
-            onClick={() => setMode('segment')}
-          >
-            📋 分段引导
-          </View>
-          <View
-            className={classnames(styles.modeItem, mode === 'full' && styles.active)}
-            onClick={() => setMode('full')}
-          >
-            ✏️ 自由编辑
-          </View>
-        </View>
-
-        <View className={styles.editorArea}>
-          {mode === 'segment' ? (
-            <>
-              <View className={styles.tipsBox}>
-                {segmentTemplates.map((tpl, i) => (
-                  <View key={i} className={styles.tipItem}>
-                    <View className={styles.num}>{i + 1}</View>
-                    <Text className={styles.text}>
-                      <Text style={{ fontWeight: 600 }}>{tpl.label}：</Text>
-                      {tpl.placeholder}
-                    </Text>
-                  </View>
-                ))}
+      {allowVoice && (
+        <View className={styles.section}>
+          <Text className={styles.sectionTitle}>🎤 语音回应</Text>
+          <View className={styles.voiceSection}>
+            {!isVoice ? (
+              <View
+                className={classnames(styles.voiceBtn, styles.voiceStart)}
+                onClick={handleStartRecord}
+              >
+                <Text className={styles.voiceIcon}>🎙️</Text>
+                <Text className={styles.voiceText}>点击开始录音</Text>
+                <Text className={styles.voiceHint}>用声音传递温度，最长60秒</Text>
               </View>
-              <View className={styles.segments}>
-                {segmentTemplates.map((tpl, i) => (
-                  <View key={i} className={styles.segment}>
-                    <View className={styles.segLabel}>
-                      <Text className={styles.emoji}>{tpl.emoji}</Text>
-                      {tpl.label}
-                      <Text style={{ color: '#9CA3AF', fontWeight: 400 }}>（可留空）</Text>
-                    </View>
-                    <Textarea
-                      className={styles.segInput}
-                      placeholder={tpl.placeholder}
-                      value={segments[i]}
-                      onInput={(e) => {
-                        const next = [...segments];
-                        next[i] = e.detail.value;
-                        setSegments(next);
+            ) : (
+              <View className={styles.voicePlayer}>
+                <View className={styles.waveform}>
+                  {[...Array(20)].map((_, i) => (
+                    <View
+                      key={i}
+                      className={classnames(
+                        styles.waveBar,
+                        isRecording && styles.animating
+                      )}
+                      style={{
+                        height: isRecording
+                          ? `${20 + Math.random() * 60}rpx`
+                          : `${20 + (i % 5) * 12}rpx`,
+                        animationDelay: `${i * 0.1}s`,
                       }}
-                      maxlength={500}
-                      autoHeight
-                      placeholderStyle="color: #C9CDD4"
                     />
+                  ))}
+                </View>
+                <View className={styles.voiceInfo}>
+                  <Text className={styles.duration}>
+                    {isRecording ? '录音中... ' : ''}
+                    {formatDuration(voiceDuration)}
+                  </Text>
+                  {!isRecording && (
+                    <View className={styles.voiceActions}>
+                      <View className={styles.playBtn}>▶️ 播放</View>
+                      <View className={styles.reRecordBtn} onClick={handleStartRecord}>
+                        重录
+                      </View>
+                      <View className={styles.deleteBtn} onClick={handleDeleteVoice}>
+                        删除
+                      </View>
+                    </View>
+                  )}
+                </View>
+                {isRecording && (
+                  <View
+                    className={styles.stopBtn}
+                    onClick={handleStopRecord}
+                  >
+                    ⏹️ 停止
                   </View>
-                ))}
+                )}
               </View>
-            </>
-          ) : (
-            <View className={styles.fullEditor}>
-              <Text className={styles.label}>自由表达你的想法：</Text>
-              <Textarea
-                className={styles.textarea}
-                placeholder="真诚地写下你的回应..."
-                value={fullText}
-                onInput={(e) => setFullText(e.detail.value)}
-                maxlength={2000}
-                autoHeight
-                placeholderStyle="color: #C9CDD4"
-              />
-              <View className={styles.charCount}>{wordCount}/2000</View>
-            </View>
-          )}
+            )}
+          </View>
         </View>
+      )}
+
+      <View className={styles.section}>
+        <Text className={styles.sectionTitle}>
+          ✍️ 编辑回应
+          <Text className={styles.hint}>
+            已输入 <Text style={{ color: '#7C9EFF', fontWeight: 600 }}>
+              {mode === 'segment' ? segmentWordCount : wordCount}
+            </Text> 字
+          </Text>
+        </Text>
+
+        {allowVoice && (
+          <View className={styles.modeSwitch}>
+            <View
+              className={classnames(styles.modeItem, !isVoice && mode === 'segment' && styles.active)}
+              onClick={() => { setMode('segment'); setIsVoice(false); }}
+            >
+              📋 分段引导
+            </View>
+            <View
+              className={classnames(styles.modeItem, !isVoice && mode === 'full' && styles.active)}
+              onClick={() => { setMode('full'); setIsVoice(false); }}
+            >
+              ✏️ 自由编辑
+            </View>
+            {allowVoice && (
+              <View
+                className={classnames(styles.modeItem, isVoice && styles.active)}
+                onClick={() => setIsVoice(true)}
+              >
+                🎤 语音
+              </View>
+            )}
+          </View>
+        )}
+
+        {!allowVoice && (
+          <View className={styles.modeSwitch}>
+            <View
+              className={classnames(styles.modeItem, mode === 'segment' && styles.active)}
+              onClick={() => setMode('segment')}
+            >
+              📋 分段引导
+            </View>
+            <View
+              className={classnames(styles.modeItem, mode === 'full' && styles.active)}
+              onClick={() => setMode('full')}
+            >
+              ✏️ 自由编辑
+            </View>
+          </View>
+        )}
+
+        {!isVoice && (
+          <View className={styles.editorArea}>
+            {mode === 'segment' ? (
+              <>
+                <View className={styles.tipsBox}>
+                  {segmentTemplates.map((tpl, i) => (
+                    <View key={i} className={styles.tipItem}>
+                      <View className={styles.num}>{i + 1}</View>
+                      <Text className={styles.text}>
+                        <Text style={{ fontWeight: 600 }}>{tpl.label}：</Text>
+                        {tpl.placeholder}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+                <View className={styles.segments}>
+                  {segmentTemplates.map((tpl, i) => (
+                    <View key={i} className={styles.segment}>
+                      <View className={styles.segLabel}>
+                        <Text className={styles.emoji}>{tpl.emoji}</Text>
+                        {tpl.label}
+                        <Text style={{ color: '#9CA3AF', fontWeight: 400, fontSize: 22 }}>
+                          （可留空 · {segments[i].length}字）
+                        </Text>
+                      </View>
+                      <Textarea
+                        className={styles.segInput}
+                        placeholder={tpl.placeholder}
+                        value={segments[i]}
+                        onInput={(e) => {
+                          const next = [...segments];
+                          next[i] = e.detail.value;
+                          setSegments(next);
+                        }}
+                        maxlength={500}
+                        autoHeight
+                        placeholderStyle="color: #C9CDD4"
+                      />
+                    </View>
+                  ))}
+                </View>
+                <View className={styles.charCount}>
+                  合计 {segmentWordCount} 字（合成后约 {wordCount} 字含标题）
+                </View>
+              </>
+            ) : (
+              <View className={styles.fullEditor}>
+                <Text className={styles.label}>自由表达你的想法：</Text>
+                <Textarea
+                  className={styles.textarea}
+                  placeholder="真诚地写下你的回应..."
+                  value={fullText}
+                  onInput={(e) => setFullText(e.detail.value)}
+                  maxlength={2000}
+                  autoHeight
+                  placeholderStyle="color: #C9CDD4"
+                />
+                <View className={styles.charCount}>{wordCount}/2000</View>
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
       {showCheck && (
@@ -360,7 +546,7 @@ const ResponseEditorPage: React.FC = () => {
 
       <View className={styles.bottomBar}>
         <Button className={classnames(styles.btn, styles.ghost)} onClick={handleSaveDraft}>
-          存草稿
+          {existingDraft ? '更新草稿' : '存草稿'}
         </Button>
         <Button
           className={classnames(styles.btn, styles.secondary)}
@@ -373,7 +559,7 @@ const ResponseEditorPage: React.FC = () => {
           disabled={!canSubmit}
           onClick={handleSubmit}
         >
-          发送回应
+          {isVoice ? '发送语音' : '发送回应'}
         </Button>
       </View>
     </ScrollView>

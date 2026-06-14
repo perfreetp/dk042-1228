@@ -17,10 +17,13 @@ interface AppContextValue extends AppState {
   addResponse: (troubleId: string, response: Omit<Response, 'id' | 'createdAt' | 'usefulSentences'>) => void;
   rateResponse: (troubleId: string, responseId: string, rating: number) => void;
   markUseful: (troubleId: string, responseId: string, sentenceIndex: number) => void;
+  markFollowUp: (troubleId: string, responseId: string) => void;
   toggleActionItem: (troubleId: string, itemId: string) => void;
   addActionItems: (troubleId: string, items: string[]) => void;
+  deleteActionItem: (troubleId: string, itemId: string) => void;
   saveDraft: (draft: Partial<Draft> & { id?: string }) => void;
   deleteDraft: (id: string) => void;
+  getDraftByTroubleId: (troubleId: string) => Draft | undefined;
   blockUser: (userId: string) => void;
   togglePauseMatch: () => void;
   reportContent: (type: string, id: string, reason: string) => void;
@@ -178,6 +181,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
   }, []);
 
+  const markFollowUp = useCallback((troubleId: string, responseId: string) => {
+    setState((s) => {
+      const updateFn = (list: Trouble[]): Trouble[] =>
+        list.map((t) =>
+          t.id === troubleId
+            ? {
+                ...t,
+                isFollowedUp: true,
+                responses: t.responses.map((r) =>
+                  r.id === responseId ? { ...r, hasFollowUp: true } : r
+                ),
+              }
+            : t
+        );
+      return {
+        ...s,
+        troubles: updateFn(s.troubles),
+        myTroubles: updateFn(s.myTroubles),
+      };
+    });
+    showToast('回访已发送，感谢你的反馈 💌', 'success');
+  }, []);
+
   const toggleActionItem = useCallback((troubleId: string, itemId: string) => {
     setState((s) => {
       const updateFn = (list: Trouble[]): Trouble[] =>
@@ -222,6 +248,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     showToast('已添加到行动清单', 'success');
   }, []);
 
+  const deleteActionItem = useCallback((troubleId: string, itemId: string) => {
+    setState((s) => {
+      const updateFn = (list: Trouble[]): Trouble[] =>
+        list.map((t) =>
+          t.id === troubleId
+            ? {
+                ...t,
+                actionItems: t.actionItems?.filter((a) => a.id !== itemId),
+              }
+            : t
+        );
+      return {
+        ...s,
+        troubles: updateFn(s.troubles),
+        myTroubles: updateFn(s.myTroubles),
+      };
+    });
+  }, []);
+
   const saveDraft = useCallback((draft: Partial<Draft> & { id?: string }) => {
     setState((s) => {
       if (draft.id) {
@@ -250,6 +295,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setState((s) => ({ ...s, drafts: s.drafts.filter((d) => d.id !== id) }));
   }, []);
 
+  const getDraftByTroubleId = useCallback(
+    (troubleId: string) => {
+      return state.drafts.find((d) => d.troubleId === troubleId);
+    },
+    [state.drafts]
+  );
+
   const blockUser = useCallback((userId: string) => {
     setState((s) => ({
       ...s,
@@ -276,10 +328,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addResponse,
       rateResponse,
       markUseful,
+      markFollowUp,
       toggleActionItem,
       addActionItems,
+      deleteActionItem,
       saveDraft,
       deleteDraft,
+      getDraftByTroubleId,
       blockUser,
       togglePauseMatch,
       reportContent,
@@ -290,10 +345,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addResponse,
       rateResponse,
       markUseful,
+      markFollowUp,
       toggleActionItem,
       addActionItems,
+      deleteActionItem,
       saveDraft,
       deleteDraft,
+      getDraftByTroubleId,
       blockUser,
       togglePauseMatch,
       reportContent,

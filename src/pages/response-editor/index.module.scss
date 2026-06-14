@@ -45,6 +45,20 @@
       line-height: $line-height-loose;
       @include text-ellipsis-multi(3);
     }
+
+    .time {
+      font-size: $font-size-xs;
+      color: $color-text-tertiary;
+    }
+
+    .voiceTag {
+      padding: 6rpx 16rpx;
+      background: rgba(52, 211, 153, 0.12);
+      color: #10b981;
+      border-radius: $radius-xs;
+      font-size: 20rpx;
+      font-weight: $font-weight-medium;
+    }
   }
 
   .section {
@@ -113,6 +127,132 @@
         font-size: $font-size-xs;
         color: $color-text-tertiary;
         line-height: $line-height-tight;
+      }
+    }
+  }
+
+  .voiceSection {
+    .voiceBtn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: $spacing-xl $spacing-md;
+      border-radius: $radius-lg;
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%);
+      border: 2rpx dashed rgba(16, 185, 129, 0.3);
+      transition: all $transition-fast;
+
+      &:active {
+        opacity: 0.8;
+      }
+
+      .voiceIcon {
+        font-size: 64rpx;
+        margin-bottom: $spacing-sm;
+      }
+
+      .voiceText {
+        font-size: $font-size-md;
+        font-weight: $font-weight-medium;
+        color: #059669;
+        margin-bottom: 4rpx;
+      }
+
+      .voiceHint {
+        font-size: $font-size-xs;
+        color: #6ee7b7;
+      }
+    }
+
+    .voicePlayer {
+      padding: $spacing-md;
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%);
+      border-radius: $radius-lg;
+
+      .waveform {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6rpx;
+        height: 80rpx;
+        margin-bottom: $spacing-sm;
+
+        .waveBar {
+          width: 6rpx;
+          background: $color-primary-gradient;
+          border-radius: 3rpx;
+          transition: height 0.1s ease;
+
+          &.animating {
+            animation: wave 1s ease-in-out infinite;
+          }
+        }
+      }
+
+      @keyframes wave {
+        0%, 100% { transform: scaleY(0.6); }
+        50% { transform: scaleY(1.2); }
+      }
+
+      .voiceInfo {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: $spacing-sm;
+
+        .duration {
+          font-size: $font-size-md;
+          font-weight: $font-weight-semibold;
+          color: $color-primary;
+        }
+
+        .voiceActions {
+          display: flex;
+          gap: $spacing-md;
+
+          .playBtn,
+          .reRecordBtn,
+          .deleteBtn {
+            padding: 8rpx 24rpx;
+            border-radius: $radius-button;
+            font-size: $font-size-xs;
+            transition: all $transition-fast;
+
+            &:active {
+              opacity: 0.8;
+            }
+          }
+
+          .playBtn {
+            background: $color-primary-gradient;
+            color: $color-text-white;
+          }
+
+          .reRecordBtn {
+            background: rgba(245, 158, 11, 0.1);
+            color: $color-warning;
+          }
+
+          .deleteBtn {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+          }
+        }
+      }
+
+      .stopBtn {
+        margin: $spacing-md auto 0;
+        padding: 12rpx 48rpx;
+        background: #ef4444;
+        color: #fff;
+        border-radius: $radius-button;
+        font-size: $font-size-sm;
+        font-weight: $font-weight-medium;
+        width: fit-content;
+
+        &:active {
+          opacity: 0.8;
+        }
       }
     }
   }
