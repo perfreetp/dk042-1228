@@ -1,0 +1,255 @@
+@use '@/styles/variables.scss' as *;
+
+.submitPage {
+  padding: $spacing-md $page-padding $spacing-xl * 2;
+  min-height: 100vh;
+
+  .section {
+    background: $color-bg-card;
+    border-radius: $radius-lg;
+    padding: $spacing-lg;
+    margin-bottom: $spacing-md;
+    box-shadow: $shadow-card;
+
+    .sectionTitle {
+      font-size: $font-size-md;
+      font-weight: $font-weight-semibold;
+      color: $color-text-primary;
+      margin-bottom: $spacing-md;
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+    }
+  }
+
+  .themeList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-sm;
+
+    .themeItem {
+      padding: 12rpx 24rpx;
+      border-radius: $radius-button;
+      font-size: $font-size-sm;
+      background: $color-bg-tag;
+      color: $color-text-secondary;
+      transition: all $transition-fast;
+
+      &.active {
+        background: $color-primary-gradient;
+        color: $color-text-white;
+      }
+
+      &:active {
+        transform: scale(0.97);
+      }
+    }
+  }
+
+  .moodList {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $spacing-md;
+
+    .moodItem {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: $spacing-md $spacing-sm;
+      border-radius: $radius-md;
+      background: $color-bg-tag;
+      transition: all $transition-base;
+      border: 3rpx solid transparent;
+
+      &.active {
+        background: rgba(124, 158, 255, 0.1);
+        border-color: $color-primary;
+      }
+
+      .emoji {
+        font-size: 56rpx;
+        margin-bottom: 8rpx;
+      }
+
+      .label {
+        font-size: $font-size-xs;
+        color: $color-text-secondary;
+
+        .active & {
+          color: $color-primary;
+          font-weight: $font-weight-medium;
+        }
+      }
+    }
+  }
+
+  .contentInput {
+    width: 100%;
+    min-height: 280rpx;
+    padding: $spacing-md;
+    background: $color-bg-page;
+    border-radius: $radius-md;
+    font-size: $font-size-md;
+    color: $color-text-primary;
+    line-height: $line-height-loose;
+    box-sizing: border-box;
+    border: none;
+    outline: none;
+  }
+
+  .charCount {
+    text-align: right;
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+    margin-top: $spacing-sm;
+  }
+
+  .optionRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-sm 0;
+    border-bottom: 1rpx solid $color-border-light;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .optionLabel {
+      flex: 1;
+
+      .title {
+        font-size: $font-size-md;
+        color: $color-text-primary;
+        margin-bottom: 4rpx;
+      }
+
+      .desc {
+        font-size: $font-size-xs;
+        color: $color-text-tertiary;
+      }
+    }
+
+    .switch {
+      width: 88rpx;
+      height: 48rpx;
+      border-radius: $radius-round;
+      background: $color-border;
+      position: relative;
+      transition: all $transition-base;
+      flex-shrink: 0;
+
+      &.on {
+        background: $color-primary;
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 4rpx;
+        left: 4rpx;
+        width: 40rpx;
+        height: 40rpx;
+        background: #fff;
+        border-radius: $radius-round;
+        box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+        transition: all $transition-base;
+      }
+
+      &.on::after {
+        left: 44rpx;
+      }
+    }
+  }
+
+  .lengthOptions {
+    display: flex;
+    gap: $spacing-sm;
+
+    .lengthItem {
+      flex: 1;
+      padding: $spacing-md $spacing-sm;
+      text-align: center;
+      border-radius: $radius-md;
+      background: $color-bg-tag;
+      transition: all $transition-fast;
+      border: 3rpx solid transparent;
+
+      &.active {
+        background: rgba(124, 158, 255, 0.1);
+        border-color: $color-primary;
+      }
+
+      .title {
+        font-size: $font-size-sm;
+        font-weight: $font-weight-medium;
+        color: $color-text-secondary;
+        margin-bottom: 4rpx;
+
+        .active & {
+          color: $color-primary;
+        }
+      }
+
+      .desc {
+        font-size: $font-size-xs;
+        color: $color-text-tertiary;
+      }
+    }
+  }
+
+  .deadlinePicker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-sm $spacing-md;
+    background: $color-bg-page;
+    border-radius: $radius-md;
+
+    .label {
+      font-size: $font-size-md;
+      color: $color-text-secondary;
+    }
+
+    .value {
+      font-size: $font-size-md;
+      color: $color-primary;
+      font-weight: $font-weight-medium;
+    }
+  }
+
+  .bottomBar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: $spacing-md $page-padding;
+    padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.06);
+    display: flex;
+    gap: $spacing-md;
+
+    .submitBtn {
+      flex: 1;
+      @include button-reset;
+      height: $button-height-lg;
+      border-radius: $radius-button;
+      background: $color-primary-gradient;
+      color: $color-text-white;
+      font-size: $font-size-lg;
+      font-weight: $font-weight-semibold;
+      transition: all $transition-base;
+
+      &:active {
+        transform: scale(0.98);
+        opacity: 0.9;
+      }
+
+      &[disabled] {
+        opacity: 0.5;
+      }
+    }
+  }
+}

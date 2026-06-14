@@ -1,0 +1,141 @@
+@use '@/styles/variables.scss' as *;
+
+.troubleCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: 0 4rpx 20rpx rgba(124, 158, 255, 0.1);
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.99);
+    box-shadow: 0 2rpx 10rpx rgba(124, 158, 255, 0.08);
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    margin-bottom: $spacing-md;
+
+    .avatar {
+      width: 64rpx;
+      height: 64rpx;
+      border-radius: $radius-round;
+      margin-right: $spacing-sm;
+      background: $color-bg-tag;
+    }
+
+    .userInfo {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+
+      .nameRow {
+        display: flex;
+        align-items: center;
+        margin-bottom: 4rpx;
+
+        .name {
+          font-size: $font-size-md;
+          font-weight: $font-weight-medium;
+          color: $color-text-primary;
+          margin-right: $spacing-sm;
+        }
+
+        .age {
+          font-size: $font-size-xs;
+          color: $color-text-tertiary;
+          background: $color-bg-tag;
+          padding: 2rpx 10rpx;
+          border-radius: $radius-xs;
+        }
+      }
+
+      .time {
+        font-size: $font-size-xs;
+        color: $color-text-tertiary;
+      }
+    }
+
+    .statusBadge {
+      font-size: $font-size-xs;
+      padding: 4rpx 14rpx;
+      border-radius: $radius-xs;
+
+      &.pending {
+        background: rgba(96, 165, 250, 0.15);
+        color: $color-info;
+      }
+      &.matched {
+        background: rgba(251, 191, 36, 0.2);
+        color: $color-warning;
+      }
+      &.replied {
+        background: rgba(124, 158, 255, 0.15);
+        color: $color-primary;
+      }
+      &.resolved {
+        background: rgba(52, 211, 153, 0.15);
+        color: $color-success;
+      }
+      &.expired {
+        background: $color-bg-hover;
+        color: $color-text-tertiary;
+      }
+    }
+  }
+
+  .content {
+    margin-bottom: $spacing-md;
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: $spacing-sm;
+      margin-bottom: $spacing-sm;
+
+      .themeTag {
+        background: $color-primary-gradient;
+        color: $color-text-white;
+        font-size: $font-size-xs;
+        padding: 4rpx 16rpx;
+        border-radius: $radius-xs;
+        white-space: nowrap;
+      }
+    }
+
+    .text {
+      font-size: $font-size-md;
+      color: $color-text-primary;
+      line-height: $line-height-loose;
+      @include text-ellipsis-multi(3);
+    }
+  }
+
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .meta {
+      display: flex;
+      align-items: center;
+      gap: $spacing-md;
+      font-size: $font-size-xs;
+      color: $color-text-tertiary;
+
+      .item {
+        display: flex;
+        align-items: center;
+        gap: 6rpx;
+      }
+    }
+
+    .replyCount {
+      font-size: $font-size-xs;
+      color: $color-primary;
+      font-weight: $font-weight-medium;
+    }
+  }
+}

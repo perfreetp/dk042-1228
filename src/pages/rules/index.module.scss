@@ -1,0 +1,98 @@
+@import '@/styles/variables.scss';
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page-gradient;
+  padding-bottom: 48rpx;
+}
+
+.header {
+  padding: 48rpx 32rpx 32rpx;
+  background: $color-primary-gradient;
+  color: #fff;
+
+  .title {
+    font-size: 48rpx;
+    font-weight: 700;
+    margin-bottom: 16rpx;
+  }
+
+  .desc {
+    font-size: 28rpx;
+    opacity: 0.9;
+    line-height: 1.6;
+  }
+}
+
+.list {
+  padding: 32rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.ruleCard {
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: $shadow-card;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx;
+  cursor: pointer;
+
+  .title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: $color-text-primary;
+    flex: 1;
+  }
+
+  .arrow {
+    font-size: 36rpx;
+    color: $color-text-secondary;
+    transition: transform 0.3s ease;
+
+    &.open {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.cardContent {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  padding: 0 32rpx;
+
+  &.open {
+    max-height: 1000rpx;
+    padding: 0 32rpx 32rpx;
+  }
+
+  .text {
+    font-size: 28rpx;
+    color: $color-text-secondary;
+    line-height: 1.8;
+    white-space: pre-wrap;
+  }
+}
+
+.footer {
+  margin: 48rpx 32rpx 0;
+  padding: 32rpx;
+  background: rgba(124, 158, 255, 0.08);
+  border-radius: 20rpx;
+  text-align: center;
+
+  .text {
+    font-size: 26rpx;
+    color: $color-primary;
+    line-height: 1.8;
+  }
+}

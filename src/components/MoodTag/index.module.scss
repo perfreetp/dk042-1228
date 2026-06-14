@@ -1,0 +1,28 @@
+@use '@/styles/variables.scss' as *;
+
+.moodTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4rpx 16rpx;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  white-space: nowrap;
+
+  &.happy {
+    background: rgba(52, 211, 153, 0.15);
+    color: $color-success;
+  }
+  &.calm {
+    background: rgba(96, 165, 250, 0.15);
+    color: $color-info;
+  }
+  &.anxious {
+    background: rgba(251, 191, 36, 0.2);
+    color: $color-warning;
+  }
+  &.sad {
+    background: rgba(167, 139, 250, 0.2);
+    color: $color-primary-light;
+  }
+}

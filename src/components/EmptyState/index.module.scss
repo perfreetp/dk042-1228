@@ -1,0 +1,28 @@
+@use '@/styles/variables.scss' as *;
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-xl * 2 $spacing-lg;
+
+  .emoji {
+    font-size: 100rpx;
+    margin-bottom: $spacing-md;
+  }
+
+  .title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: $spacing-sm;
+  }
+
+  .desc {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+    text-align: center;
+    line-height: $line-height-loose;
+  }
+}

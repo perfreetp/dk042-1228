@@ -1,0 +1,135 @@
+@use '@/styles/variables.scss' as *;
+
+.responseCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+
+  .header {
+    display: flex;
+    align-items: center;
+    margin-bottom: $spacing-md;
+
+    .avatar {
+      width: 56rpx;
+      height: 56rpx;
+      border-radius: $radius-round;
+      margin-right: $spacing-sm;
+      background: $color-bg-tag;
+    }
+
+    .info {
+      flex: 1;
+
+      .nameRow {
+        display: flex;
+        align-items: center;
+        gap: $spacing-sm;
+        margin-bottom: 4rpx;
+
+        .name {
+          font-size: $font-size-md;
+          font-weight: $font-weight-medium;
+          color: $color-text-primary;
+        }
+
+        .toneTag {
+          font-size: $font-size-xs;
+          padding: 2rpx 12rpx;
+          border-radius: $radius-xs;
+          background: $color-primary-gradient;
+          color: $color-text-white;
+        }
+      }
+
+      .time {
+        font-size: $font-size-xs;
+        color: $color-text-tertiary;
+      }
+    }
+
+    .voiceBadge {
+      display: flex;
+      align-items: center;
+      gap: 6rpx;
+      font-size: $font-size-xs;
+      color: $color-primary;
+      background: rgba(124, 158, 255, 0.1);
+      padding: 4rpx 14rpx;
+      border-radius: $radius-xs;
+    }
+  }
+
+  .content {
+    margin-bottom: $spacing-md;
+
+    .sentence {
+      font-size: $font-size-md;
+      color: $color-text-primary;
+      line-height: $line-height-loose;
+      padding: 4rpx 8rpx;
+      border-radius: $radius-xs;
+      transition: all $transition-fast;
+      margin-bottom: 4rpx;
+
+      &.useful {
+        background: rgba(245, 158, 11, 0.12);
+        color: $color-text-primary;
+        font-weight: $font-weight-medium;
+      }
+    }
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: $spacing-md;
+    border-top: 1rpx solid $color-border-light;
+
+    .left {
+      display: flex;
+      align-items: center;
+      gap: $spacing-md;
+    }
+
+    .rating {
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
+
+      .star {
+        font-size: 36rpx;
+        opacity: 0.3;
+        transition: opacity $transition-fast;
+
+        &.active {
+          opacity: 1;
+        }
+      }
+    }
+
+    .actionBtn {
+      display: flex;
+      align-items: center;
+      gap: 6rpx;
+      font-size: $font-size-sm;
+      color: $color-text-secondary;
+      padding: 8rpx 16rpx;
+      border-radius: $radius-button;
+      background: $color-bg-hover;
+      transition: all $transition-fast;
+
+      &:active {
+        opacity: 0.8;
+      }
+
+      &.active {
+        background: rgba(245, 158, 11, 0.15);
+        color: $color-warning;
+      }
+    }
+  }
+}

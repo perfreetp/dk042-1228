@@ -1,0 +1,88 @@
+@use '@/styles/compat.scss';
+@use '@/styles/variables.scss' as *;
+
+page {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: $font-size-md;
+  line-height: $line-height-normal;
+  color: $color-text-primary;
+  background: $color-bg-page-gradient;
+  min-height: 100vh;
+}
+
+.pageContainer {
+  padding: $spacing-md $page-padding $spacing-xl;
+  min-height: calc(100vh - 100rpx);
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  padding-left: $spacing-sm;
+  border-left: 6rpx solid $color-primary;
+}
+
+.card {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.btnPrimary {
+  @include button-reset;
+  background: $color-primary-gradient;
+  color: $color-text-white;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  height: $button-height-md;
+  border-radius: $radius-button;
+  padding: 0 $spacing-xl;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+
+  &[disabled] {
+    opacity: 0.5;
+  }
+}
+
+.btnSecondary {
+  @include button-reset;
+  background: $color-bg-hover;
+  color: $color-primary;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  height: $button-height-md;
+  border-radius: $radius-button;
+  padding: 0 $spacing-xl;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4rpx 16rpx;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  background: $color-bg-tag;
+  color: $color-primary;
+  white-space: nowrap;
+}
+
+.divider {
+  height: 1rpx;
+  background: $color-border-light;
+  margin: $spacing-md 0;
+}

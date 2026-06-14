@@ -1,0 +1,402 @@
+@use '@/styles/variables.scss' as *;
+
+.editorPage {
+  padding: $spacing-md $page-padding $spacing-xl * 2;
+  min-height: 100vh;
+
+  .troublePreview {
+    background: rgba(124, 158, 255, 0.08);
+    border: 2rpx solid rgba(124, 158, 255, 0.2);
+    border-radius: $radius-lg;
+    padding: $spacing-lg;
+    margin-bottom: $spacing-lg;
+
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: $spacing-sm;
+
+      .avatar {
+        width: 48rpx;
+        height: 48rpx;
+        border-radius: $radius-round;
+        margin-right: $spacing-sm;
+      }
+
+      .name {
+        font-size: $font-size-sm;
+        font-weight: $font-weight-medium;
+        color: $color-text-primary;
+        margin-right: $spacing-sm;
+      }
+
+      .theme {
+        font-size: 20rpx;
+        background: $color-primary-gradient;
+        color: $color-text-white;
+        padding: 2rpx 10rpx;
+        border-radius: $radius-xs;
+      }
+    }
+
+    .content {
+      font-size: $font-size-sm;
+      color: $color-text-secondary;
+      line-height: $line-height-loose;
+      @include text-ellipsis-multi(3);
+    }
+  }
+
+  .section {
+    background: $color-bg-card;
+    border-radius: $radius-lg;
+    padding: $spacing-lg;
+    margin-bottom: $spacing-md;
+    box-shadow: $shadow-card;
+
+    .sectionTitle {
+      font-size: $font-size-md;
+      font-weight: $font-weight-semibold;
+      color: $color-text-primary;
+      margin-bottom: $spacing-md;
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+
+      .hint {
+        font-size: $font-size-xs;
+        font-weight: $font-weight-normal;
+        color: $color-text-tertiary;
+      }
+    }
+  }
+
+  .toneList {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-md;
+
+    .toneItem {
+      padding: $spacing-md;
+      border-radius: $radius-md;
+      background: $color-bg-tag;
+      transition: all $transition-fast;
+      border: 3rpx solid transparent;
+
+      &.active {
+        background: rgba(124, 158, 255, 0.1);
+        border-color: $color-primary;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        gap: $spacing-sm;
+        margin-bottom: 6rpx;
+
+        .emoji {
+          font-size: 32rpx;
+        }
+
+        .name {
+          font-size: $font-size-sm;
+          font-weight: $font-weight-medium;
+          color: $color-text-secondary;
+
+          .active & {
+            color: $color-primary;
+          }
+        }
+      }
+
+      .desc {
+        font-size: $font-size-xs;
+        color: $color-text-tertiary;
+        line-height: $line-height-tight;
+      }
+    }
+  }
+
+  .tipsBox {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(252, 211, 77, 0.08) 100%);
+    border: 2rpx solid rgba(245, 158, 11, 0.2);
+    border-radius: $radius-md;
+    padding: $spacing-md;
+    margin-bottom: $spacing-md;
+
+    .tipItem {
+      display: flex;
+      align-items: flex-start;
+      gap: $spacing-sm;
+      margin-bottom: $spacing-sm;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .num {
+        width: 36rpx;
+        height: 36rpx;
+        border-radius: $radius-round;
+        background: rgba(245, 158, 11, 0.2);
+        color: $color-warning;
+        font-size: 22rpx;
+        font-weight: $font-weight-semibold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .text {
+        flex: 1;
+        font-size: $font-size-xs;
+        color: $color-text-secondary;
+        line-height: $line-height-normal;
+      }
+    }
+  }
+
+  .editorArea {
+    .segments {
+      margin-bottom: $spacing-md;
+
+      .segment {
+        margin-bottom: $spacing-md;
+
+        .segLabel {
+          font-size: $font-size-xs;
+          color: $color-primary;
+          font-weight: $font-weight-medium;
+          margin-bottom: $spacing-sm;
+          display: flex;
+          align-items: center;
+          gap: $spacing-xs;
+
+          .emoji {
+            font-size: 24rpx;
+          }
+        }
+
+        .segInput {
+          width: 100%;
+          min-height: 140rpx;
+          padding: $spacing-md;
+          background: $color-bg-page;
+          border-radius: $radius-md;
+          font-size: $font-size-md;
+          color: $color-text-primary;
+          line-height: $line-height-loose;
+          box-sizing: border-box;
+          border: 2rpx solid transparent;
+          outline: none;
+          transition: border-color $transition-fast;
+
+          &:focus {
+            border-color: $color-primary;
+          }
+        }
+      }
+    }
+
+    .segButtons {
+      display: flex;
+      gap: $spacing-sm;
+      margin-bottom: $spacing-md;
+
+      .segBtn {
+        flex: 1;
+        @include button-reset;
+        height: 64rpx;
+        border-radius: $radius-button;
+        background: $color-bg-hover;
+        color: $color-text-secondary;
+        font-size: $font-size-xs;
+
+        &:active {
+          opacity: 0.8;
+        }
+      }
+    }
+
+    .fullEditor {
+      .label {
+        font-size: $font-size-sm;
+        color: $color-text-secondary;
+        margin-bottom: $spacing-sm;
+      }
+
+      .textarea {
+        width: 100%;
+        min-height: 360rpx;
+        padding: $spacing-md;
+        background: $color-bg-page;
+        border-radius: $radius-md;
+        font-size: $font-size-md;
+        color: $color-text-primary;
+        line-height: $line-height-loose;
+        box-sizing: border-box;
+        border: 2rpx solid transparent;
+        outline: none;
+        transition: border-color $transition-fast;
+
+        &:focus {
+          border-color: $color-primary;
+        }
+      }
+
+      .charCount {
+        text-align: right;
+        font-size: $font-size-xs;
+        color: $color-text-tertiary;
+        margin-top: $spacing-xs;
+      }
+    }
+  }
+
+  .modeSwitch {
+    display: flex;
+    background: $color-bg-hover;
+    border-radius: $radius-button;
+    padding: 6rpx;
+    margin-bottom: $spacing-md;
+
+    .modeItem {
+      flex: 1;
+      height: 64rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: $radius-button;
+      font-size: $font-size-xs;
+      color: $color-text-secondary;
+      transition: all $transition-fast;
+
+      &.active {
+        background: $color-bg-card;
+        color: $color-primary;
+        font-weight: $font-weight-medium;
+        box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+      }
+    }
+  }
+
+  .checkList {
+    .checkItem {
+      display: flex;
+      align-items: flex-start;
+      padding: $spacing-sm 0;
+      border-bottom: 1rpx solid $color-border-light;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .checkbox {
+        width: 40rpx;
+        height: 40rpx;
+        border-radius: $radius-sm;
+        border: 3rpx solid $color-border;
+        margin-right: $spacing-sm;
+        margin-top: 2rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all $transition-fast;
+
+        &.pass {
+          background: $color-success;
+          border-color: $color-success;
+        }
+
+        &.warn {
+          background: $color-warning;
+          border-color: $color-warning;
+        }
+      }
+
+      .content {
+        flex: 1;
+
+        .title {
+          font-size: $font-size-sm;
+          color: $color-text-primary;
+          margin-bottom: 4rpx;
+        }
+
+        .desc {
+          font-size: $font-size-xs;
+          color: $color-text-tertiary;
+          line-height: $line-height-tight;
+        }
+      }
+
+      .status {
+        font-size: $font-size-xs;
+        font-weight: $font-weight-medium;
+        margin-left: $spacing-sm;
+
+        &.pass {
+          color: $color-success;
+        }
+        &.warn {
+          color: $color-warning;
+        }
+        &.none {
+          color: $color-text-tertiary;
+        }
+      }
+    }
+  }
+
+  .bottomBar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: $spacing-md $page-padding;
+    padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.06);
+    display: flex;
+    gap: $spacing-md;
+
+    .btn {
+      @include button-reset;
+      height: $button-height-lg;
+      border-radius: $radius-button;
+      font-size: $font-size-md;
+      font-weight: $font-weight-medium;
+      transition: all $transition-base;
+
+      &:active {
+        transform: scale(0.98);
+      }
+
+      &.ghost {
+        width: 180rpx;
+        background: $color-bg-hover;
+        color: $color-text-secondary;
+      }
+
+      &.secondary {
+        width: 180rpx;
+        background: rgba(245, 158, 11, 0.1);
+        color: $color-warning;
+      }
+
+      &.primary {
+        flex: 1;
+        background: $color-primary-gradient;
+        color: $color-text-white;
+        font-weight: $font-weight-semibold;
+
+        &[disabled] {
+          opacity: 0.5;
+        }
+      }
+    }
+  }
+}

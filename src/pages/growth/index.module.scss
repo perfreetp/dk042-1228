@@ -1,0 +1,256 @@
+@use '@/styles/variables.scss' as *;
+
+.growthPage {
+  padding: $spacing-md $page-padding $spacing-xl;
+  min-height: 100vh;
+
+  .profileCard {
+    background: $color-primary-gradient;
+    border-radius: $radius-xl;
+    padding: $spacing-xl $spacing-lg;
+    margin-bottom: $spacing-lg;
+    color: $color-text-white;
+    box-shadow: 0 8rpx 32rpx rgba(124, 158, 255, 0.25);
+
+    .userInfo {
+      display: flex;
+      align-items: center;
+      margin-bottom: $spacing-xl;
+
+      .avatar {
+        width: 100rpx;
+        height: 100rpx;
+        border-radius: $radius-round;
+        margin-right: $spacing-md;
+        border: 4rpx solid rgba(255, 255, 255, 0.4);
+      }
+
+      .info {
+        flex: 1;
+
+        .nickname {
+          font-size: $font-size-lg;
+          font-weight: $font-weight-bold;
+          margin-bottom: 6rpx;
+        }
+
+        .bio {
+          font-size: $font-size-xs;
+          opacity: 0.9;
+          @include text-ellipsis;
+        }
+      }
+    }
+
+    .statsRow {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: $spacing-sm;
+
+      .statItem {
+        text-align: center;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: $radius-md;
+        padding: $spacing-md $spacing-sm;
+
+        .value {
+          font-size: 40rpx;
+          font-weight: $font-weight-bold;
+          line-height: 1.2;
+          margin-bottom: 4rpx;
+        }
+
+        .label {
+          font-size: $font-size-xs;
+          opacity: 0.9;
+        }
+      }
+    }
+  }
+
+  .sectionTitle {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: $spacing-md;
+    padding-left: $spacing-sm;
+    border-left: 6rpx solid $color-primary;
+  }
+
+  .moodChart {
+    background: $color-bg-card;
+    border-radius: $radius-lg;
+    padding: $spacing-lg;
+    margin-bottom: $spacing-lg;
+    box-shadow: $shadow-card;
+
+    .chartHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: $spacing-lg;
+
+      .title {
+        font-size: $font-size-md;
+        font-weight: $font-weight-semibold;
+        color: $color-text-primary;
+      }
+
+      .moodAvg {
+        font-size: $font-size-sm;
+        color: $color-text-secondary;
+
+        .emoji {
+          margin-right: 4rpx;
+        }
+      }
+    }
+
+    .chartBody {
+      height: 240rpx;
+      position: relative;
+      margin-bottom: $spacing-sm;
+    }
+
+    .dateLabels {
+      display: flex;
+      justify-content: space-between;
+      font-size: $font-size-xs;
+      color: $color-text-tertiary;
+    }
+  }
+
+  .weeklyChart {
+    background: $color-bg-card;
+    border-radius: $radius-lg;
+    padding: $spacing-lg;
+    margin-bottom: $spacing-lg;
+    box-shadow: $shadow-card;
+
+    .chartHeader {
+      margin-bottom: $spacing-lg;
+
+      .title {
+        font-size: $font-size-md;
+        font-weight: $font-weight-semibold;
+        color: $color-text-primary;
+        margin-bottom: 4rpx;
+      }
+
+      .sub {
+        font-size: $font-size-xs;
+        color: $color-text-tertiary;
+      }
+    }
+
+    .bars {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      height: 200rpx;
+      margin-bottom: $spacing-sm;
+
+      .barWrap {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        height: 100%;
+
+        .bar {
+          width: 36rpx;
+          background: $color-primary-gradient;
+          border-radius: $radius-xs $radius-xs 0 0;
+          transition: all $transition-slow;
+          min-height: 8rpx;
+
+          &:active {
+            opacity: 0.8;
+          }
+        }
+
+        .count {
+          font-size: $font-size-xs;
+          color: $color-primary;
+          font-weight: $font-weight-medium;
+          margin-bottom: 4rpx;
+        }
+      }
+    }
+
+    .dayLabels {
+      display: flex;
+      justify-content: space-between;
+      font-size: $font-size-xs;
+      color: $color-text-tertiary;
+
+      .day {
+        flex: 1;
+        text-align: center;
+      }
+    }
+  }
+
+  .historySection {
+    .list {
+      background: $color-bg-card;
+      border-radius: $radius-lg;
+      overflow: hidden;
+      box-shadow: $shadow-card;
+
+      .listItem {
+        display: flex;
+        align-items: center;
+        padding: $spacing-lg;
+        border-bottom: 1rpx solid $color-border-light;
+        transition: all $transition-fast;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        &:active {
+          background: $color-bg-hover;
+        }
+
+        .icon {
+          width: 72rpx;
+          height: 72rpx;
+          border-radius: $radius-md;
+          background: $color-bg-tag;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 36rpx;
+          margin-right: $spacing-md;
+        }
+
+        .info {
+          flex: 1;
+
+          .title {
+            font-size: $font-size-md;
+            color: $color-text-primary;
+            font-weight: $font-weight-medium;
+            margin-bottom: 4rpx;
+          }
+
+          .desc {
+            font-size: $font-size-xs;
+            color: $color-text-tertiary;
+          }
+        }
+
+        .badge {
+          font-size: $font-size-xs;
+          padding: 4rpx 14rpx;
+          border-radius: $radius-xs;
+          background: rgba(16, 185, 129, 0.15);
+          color: $color-success;
+        }
+      }
+    }
+  }
+}
