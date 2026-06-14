@@ -129,6 +129,27 @@
   }
 }
 
+.responsePreview {
+  background: rgba(124, 158, 255, 0.06);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-sm;
+
+  .previewLabel {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+    display: block;
+    margin-bottom: 6rpx;
+  }
+
+  .previewContent {
+    font-size: $font-size-sm;
+    color: $color-text-primary;
+    line-height: $line-height-normal;
+    @include text-ellipsis-multi(2);
+  }
+}
+
 .followUpContent {
   background: rgba(245, 158, 11, 0.06);
   border-radius: $radius-md;

@@ -7,8 +7,29 @@ import { formatTime, getToneLabel } from '@/utils';
 
 const moodEmojis = ['😢', '😔', '😐', '🙂', '😊'];
 
+const typeConfig = {
+  help: {
+    icon: '💬',
+    label: '帮助了',
+    tagBg: 'rgba(124, 158, 255, 0.15)',
+    tagColor: '#7C9EFF',
+  },
+  highRate: {
+    icon: '⭐',
+    label: '收到好评',
+    tagBg: 'rgba(245, 158, 11, 0.15)',
+    tagColor: '#F59E0B',
+  },
+  followUp: {
+    icon: '💝',
+    label: '回访',
+    tagBg: 'rgba(236, 72, 153, 0.15)',
+    tagColor: '#EC4899',
+  },
+};
+
 const GrowthPage: React.FC = () => {
-  const { user, growthData, myTroubles, troubles } = useApp();
+  const { user, growthData, myTroubles, troubles, interactionRecords } = useApp();
 
   const avgMood = useMemo(() => {
     const sum = growthData.moodTrend.reduce((s, d) => s + d.mood, 0);
@@ -80,12 +101,20 @@ const GrowthPage: React.FC = () => {
     return results.slice(0, 5);
   }, [troubles, user.id]);
 
+  const displayRecords = useMemo(
+    () => interactionRecords.slice(0, 20),
+    [interactionRecords]
+  );
+
   const goRules = () => {
     Taro.navigateTo({ url: '/pages/rules/index' });
   };
 
-  const goTroubleDetail = (troubleId: string) => {
-    Taro.navigateTo({ url: `/pages/trouble-detail/index?troubleId=${troubleId}` });
+  const goTroubleDetail = (troubleId: string, responseId?: string) => {
+    const rid = responseId || '';
+    Taro.navigateTo({
+      url: `/pages/trouble-detail/index?troubleId=${troubleId}&responseId=${rid}`,
+    });
   };
 
   return (
@@ -302,6 +331,68 @@ const GrowthPage: React.FC = () => {
           </View>
         </View>
       </View>
+
+      <View className={styles.timelineSection}>
+        <Text className={styles.sectionTitle}>互动时间线</Text>
+        {displayRecords.length === 0 ? (
+          <View className={styles.timelineEmpty}>
+            <Text className={styles.emptyEmoji}>✨</Text>
+            <Text className={styles.emptyTitle}>暂无互动记录</Text>
+            <Text className={styles.emptyDesc}>帮助别人后会记录在这里</Text>
+          </View>
+        ) : (
+          <View className={styles.timelineList}>
+            {displayRecords.map((record) => {
+              const config = typeConfig[record.type];
+              return (
+                <View
+                  key={record.id}
+                  className={styles.timelineCard}
+                  onClick={() => goTroubleDetail(record.troubleId, record.responseId)}
+                >
+                  <View className={styles.timelineLeft}>
+                    <View
+                      className={styles.timelineIcon}
+                      style={{ background: config.tagBg }}
+                    >
+                      {config.icon}
+                    </View>
+                    <View className={styles.timelineConnector} />
+                  </View>
+                  <View className={styles.timelineBody}>
+                    <View className={styles.timelineHeader}>
+                      <View
+                        className={styles.timelineTag}
+                        style={{ background: config.tagBg, color: config.tagColor }}
+                      >
+                        {config.label}
+                      </View>
+                      {record.type === 'highRate' && record.rating && (
+                        <View className={styles.timelineStars}>
+                          {Array.from({ length: record.rating }).map((_, si) => (
+                            <Text key={si} className={styles.timelineStar}>⭐</Text>
+                          ))}
+                        </View>
+                      )}
+                      <Text className={styles.timelineTime}>
+                        {formatTime(record.createdAt)}
+                      </Text>
+                    </View>
+                    <Text className={styles.timelineDesc}>
+                      {record.description}
+                    </Text>
+                    <Text className={styles.timelineTheme}>
+                      📌 {record.troubleTheme}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
+      </View>
+
+      <View style={{ height: 160 }} />
     </ScrollView>
   );
 };

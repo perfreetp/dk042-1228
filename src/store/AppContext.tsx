@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, ReactNode } from 'react';
 import Taro from '@tarojs/taro';
-import type { Trouble, Response, UserProfile, GrowthData, Draft, ActionItem, FollowUpRecord } from '@/types';
+import type { Trouble, Response, UserProfile, GrowthData, Draft, ActionItem, FollowUpRecord, InteractionRecord, TroubleTheme } from '@/types';
 import { mockTroubles, mockMyTroubles } from '@/data/mockTroubles';
 import { mockGrowthData, mockUserProfile } from '@/data/mockGrowth';
 import { uid, showToast } from '@/utils';
@@ -12,6 +12,7 @@ interface AppState {
   drafts: Draft[];
   growthData: GrowthData;
   followUpRecords: FollowUpRecord[];
+  interactionRecords: InteractionRecord[];
 }
 
 interface AppContextValue extends AppState {
@@ -31,7 +32,7 @@ interface AppContextValue extends AppState {
   reportContent: (type: string, id: string, reason: string) => void;
 }
 
-const STORAGE_KEY = 'trouble_exchange_state';
+const STORAGE_KEY = 'trouble_exchange_state_v2';
 
 const defaultState: AppState = {
   user: mockUserProfile,
@@ -40,7 +41,11 @@ const defaultState: AppState = {
   drafts: [],
   growthData: mockGrowthData,
   followUpRecords: [],
+  interactionRecords: [],
 };
+
+const sortDrafts = (drafts: Draft[]): Draft[] =>
+  [...drafts].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
 const loadState = (): AppState => {
   try {
@@ -51,9 +56,10 @@ const loadState = (): AppState => {
         user: saved.user || defaultState.user,
         troubles: saved.troubles || defaultState.troubles,
         myTroubles: saved.myTroubles || defaultState.myTroubles,
-        drafts: saved.drafts || defaultState.drafts,
+        drafts: sortDrafts(saved.drafts || defaultState.drafts),
         growthData: saved.growthData || defaultState.growthData,
         followUpRecords: saved.followUpRecords || defaultState.followUpRecords,
+        interactionRecords: saved.interactionRecords || defaultState.interactionRecords,
       };
     }
   } catch (_e) {
@@ -80,6 +86,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // ignore
     }
   }, [state]);
+
+  const pushInteraction = (record: Omit<InteractionRecord, 'id' | 'createdAt'>) => {
+    setState((s) => ({
+      ...s,
+      interactionRecords: [
+        {
+          ...record,
+          id: uid(),
+          createdAt: new Date().toISOString(),
+        },
+        ...s.interactionRecords,
+      ],
+    }));
+  };
 
   const submitTrouble = useCallback(
     (data: Omit<Trouble, 'id' | 'userId' | 'responses' | 'createdAt' | 'status'>) => {
@@ -110,18 +130,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       };
 
       setState((s) => {
+        let targetTrouble: Trouble | undefined;
         const updateTroubleList = (list: Trouble[]): Trouble[] =>
-          list.map((t) =>
-            t.id === troubleId
-              ? {
-                  ...t,
-                  responses: [...t.responses, response],
-                  status: t.status === 'pending' ? 'replied' : t.status,
-                }
-              : t
-          );
+          list.map((t) => {
+            if (t.id === troubleId) {
+              const updated = {
+                ...t,
+                responses: [...t.responses, response],
+                status: t.status === 'pending' ? 'replied' : t.status,
+              };
+              targetTrouble = updated;
+              return updated;
+            }
+            return t;
+          });
 
-        return {
+        const updatedState = {
           ...s,
           troubles: updateTroubleList(s.troubles),
           myTroubles: updateTroubleList(s.myTroubles),
@@ -134,6 +158,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             helpCount: s.user.helpCount + 1,
           },
         };
+
+        if (targetTrouble) {
+          const interaction: Omit<InteractionRecord, 'id' | 'createdAt'> = {
+            type: 'help',
+            troubleId: targetTrouble.id,
+            troubleTheme: targetTrouble.theme,
+            troubleContent: targetTrouble.content,
+            responseId: response.id,
+            targetUserName: targetTrouble.userName,
+            targetUserAvatar: targetTrouble.userAvatar,
+            description: `帮助了 ${targetTrouble.userName}`,
+          };
+          return {
+            ...updatedState,
+            interactionRecords: [
+              {
+                ...interaction,
+                id: uid(),
+                createdAt: new Date().toISOString(),
+              },
+              ...s.interactionRecords,
+            ],
+          };
+        }
+        return updatedState;
       });
       showToast('回应已发送', 'success');
     },
@@ -142,23 +191,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const rateResponse = useCallback((troubleId: string, responseId: string, rating: number) => {
     setState((s) => {
+      let targetTrouble: Trouble | undefined;
+      let targetResponse: Response | undefined;
+
       const updateFn = (list: Trouble[]): Trouble[] =>
-        list.map((t) =>
-          t.id === troubleId
-            ? {
-                ...t,
-                responses: t.responses.map((r) =>
-                  r.id === responseId
-                    ? { ...r, rating }
-                    : r
-                ),
-                status: rating >= 4 ? 'resolved' : t.status,
+        list.map((t) => {
+          if (t.id !== troubleId) return t;
+          const updated = {
+            ...t,
+            responses: t.responses.map((r) => {
+              if (r.id === responseId) {
+                targetResponse = { ...r, rating };
+                return targetResponse;
               }
-            : t
-        );
+              return r;
+            }),
+            status: rating >= 4 ? 'resolved' : t.status,
+          };
+          targetTrouble = updated;
+          return updated;
+        });
 
       const shouldThanks = rating >= 4;
-      return {
+      const newState = {
         ...s,
         troubles: updateFn(s.troubles),
         myTroubles: updateFn(s.myTroubles),
@@ -176,6 +231,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             }
           : s.user,
       };
+
+      if (targetTrouble && targetResponse && targetResponse.userId !== 'me') {
+        const interaction: Omit<InteractionRecord, 'id' | 'createdAt'> = {
+          type: 'highRate',
+          troubleId: targetTrouble.id,
+          troubleTheme: targetTrouble.theme as TroubleTheme,
+          troubleContent: targetTrouble.content,
+          responseId: targetResponse.id,
+          targetUserName: targetResponse.userName,
+          targetUserAvatar: targetResponse.userAvatar,
+          description: `收到了 ${rating} 星好评！来自 ${targetTrouble.userName} 的感谢`,
+          rating,
+        };
+        return {
+          ...newState,
+          interactionRecords: [
+            {
+              ...interaction,
+              id: uid(),
+              createdAt: new Date().toISOString(),
+            },
+            ...s.interactionRecords,
+          ],
+        };
+      }
+      return newState;
     });
     showToast('感谢你的评价', 'success');
   }, []);
@@ -214,23 +295,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const trouble = allTroubles.find((t) => t.id === troubleId);
       const response = trouble?.responses.find((r) => r.id === responseId);
 
-      const sentRecord: FollowUpRecord = {
-        id: uid(),
+      const baseRecord: Omit<FollowUpRecord, 'id' | 'createdAt' | 'direction'> = {
         troubleId,
-        troubleTheme: trouble?.theme || '其他',
+        troubleTheme: (trouble?.theme as TroubleTheme) || '其他',
         troubleContent: trouble?.content || '',
         responseId,
         responderName: response?.userName || '',
-        direction: 'sent',
+        responderAvatar: response?.userAvatar,
+        responseContent: response?.content || '',
         content,
         mood,
+      };
+
+      const sentRecord: FollowUpRecord = {
+        ...baseRecord,
+        id: uid(),
+        direction: 'sent',
         createdAt: new Date().toISOString(),
       };
 
       const receivedRecord: FollowUpRecord = {
-        ...sentRecord,
+        ...baseRecord,
         id: uid(),
         direction: 'received',
+        createdAt: new Date().toISOString(),
       };
 
       const updateFn = (list: Trouble[]): Trouble[] =>
@@ -244,11 +332,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             : t
         );
 
+      const newTroubles = updateFn(s.troubles);
+      const newMyTroubles = updateFn(s.myTroubles);
+
+      let interactionList = s.interactionRecords;
+      if (trouble && response && response.userId !== 'me') {
+        const interaction: Omit<InteractionRecord, 'id' | 'createdAt'> = {
+          type: 'followUp',
+          troubleId: trouble.id,
+          troubleTheme: trouble.theme as TroubleTheme,
+          troubleContent: trouble.content,
+          responseId: response.id,
+          targetUserName: response.userName,
+          targetUserAvatar: response.userAvatar,
+          description: `回访了 ${response.userName}：${content.slice(0, 20)}${content.length > 20 ? '...' : ''}`,
+        };
+        interactionList = [
+          {
+            ...interaction,
+            id: uid(),
+            createdAt: new Date().toISOString(),
+          },
+          ...interactionList,
+        ];
+      }
+
       return {
         ...s,
-        troubles: updateFn(s.troubles),
-        myTroubles: updateFn(s.myTroubles),
+        troubles: newTroubles,
+        myTroubles: newMyTroubles,
         followUpRecords: [sentRecord, receivedRecord, ...s.followUpRecords],
+        interactionRecords: interactionList,
       };
     });
     showToast('回访已发送，感谢你的反馈 💌', 'success');
@@ -320,13 +434,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const saveDraft = useCallback((draft: Partial<Draft> & { id?: string }) => {
     setState((s) => {
       if (draft.id) {
+        const others = s.drafts.filter((d) => d.id !== draft.id);
+        const updated = s.drafts.map((d) =>
+          d.id === draft.id
+            ? { ...d, ...draft, updatedAt: new Date().toISOString() }
+            : d
+        );
+        const target = updated.find((d) => d.id === draft.id);
         return {
           ...s,
-          drafts: s.drafts.map((d) =>
-            d.id === draft.id
-              ? { ...d, ...draft, updatedAt: new Date().toISOString() }
-              : d
-          ),
+          drafts: sortDrafts(target ? [target, ...others] : updated),
         };
       }
       const newDraft: Draft = {

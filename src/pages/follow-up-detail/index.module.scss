@@ -1,0 +1,229 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding: $spacing-lg $page-padding;
+}
+
+.header {
+  margin-bottom: $spacing-lg;
+
+  .dirRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .dirTag {
+      font-size: $font-size-sm;
+      padding: $spacing-xs $spacing-md;
+      border-radius: $radius-xs;
+      font-weight: $font-weight-medium;
+
+      &.sent {
+        background: rgba(124, 158, 255, 0.15);
+        color: #7C9EFF;
+      }
+
+      &.received {
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+      }
+    }
+
+    .time {
+      font-size: $font-size-xs;
+      color: $color-text-tertiary;
+    }
+  }
+}
+
+.timeline {
+  position: relative;
+
+  .connector {
+    position: absolute;
+    left: 20rpx;
+    top: 24rpx;
+    bottom: 24rpx;
+    width: 4rpx;
+    background: linear-gradient(180deg, rgba(124,158,255,0.4), rgba(167,139,250,0.2));
+    border-radius: 2rpx;
+    z-index: 0;
+  }
+}
+
+.step {
+  position: relative;
+  margin-bottom: $spacing-lg;
+  z-index: 1;
+
+  .stepDot {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 44rpx;
+    height: 44rpx;
+    border-radius: $radius-round;
+    background: $color-bg-card;
+    box-shadow: $shadow-card;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24rpx;
+  }
+
+  .stepBody {
+    margin-left: 68rpx;
+  }
+
+  .stepTitle {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: $spacing-sm;
+  }
+}
+
+.card {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.cardHeader {
+  margin-bottom: $spacing-sm;
+
+  .theme {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-primary;
+  }
+}
+
+.troubleContent {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  line-height: $line-height-normal;
+}
+
+.respHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+  padding-bottom: $spacing-sm;
+  border-bottom: 1rpx solid $color-border-light;
+
+  .avatar {
+    width: 56rpx;
+    height: 56rpx;
+    border-radius: $radius-round;
+    background: $color-bg-tag;
+  }
+
+  .responderName {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-text-primary;
+  }
+}
+
+.responseContent {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  line-height: $line-height-normal;
+}
+
+.responseWrap {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+
+  :global(.responseCard) {
+    box-shadow: none;
+    background: rgba(124,158,255,0.04);
+    margin-bottom: 0;
+  }
+}
+
+.followUpCard {
+  background: linear-gradient(135deg, rgba(124, 158, 255, 0.06) 0%, rgba(245, 158, 11, 0.06) 100%);
+}
+
+.moodRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-sm;
+  padding-bottom: $spacing-sm;
+  border-bottom: 1rpx dashed rgba(124,158,255,0.2);
+
+  .moodLabel {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+  }
+
+  .mood {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-warning;
+  }
+}
+
+.followUpContent {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  line-height: $line-height-normal;
+  font-weight: $font-weight-medium;
+}
+
+.bottomBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  gap: $spacing-md;
+  padding: $spacing-md $page-padding calc($spacing-md + env(safe-area-inset-bottom));
+  background: rgba(250,250,252,0.96);
+  backdrop-filter: blur(10px);
+  border-top: 1rpx solid $color-border-light;
+  z-index: 100;
+}
+
+.secondaryBtn,
+.primaryBtn {
+  flex: 1;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  transition: all $transition-fast;
+}
+
+.secondaryBtn {
+  background: $color-bg-hover;
+  color: $color-text-secondary;
+
+  &:active {
+    background: rgba(156,163,175,0.12);
+  }
+}
+
+.primaryBtn {
+  background: $color-primary-gradient;
+  color: #fff;
+  box-shadow: 0 8rpx 24rpx rgba(124,158,255,0.4);
+
+  &:active {
+    transform: translateY(2rpx);
+    opacity: 0.95;
+  }
+}

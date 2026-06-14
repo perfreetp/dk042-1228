@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useRouter } from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 import { useApp } from '@/store/AppContext';
@@ -10,16 +10,25 @@ import { formatTime } from '@/utils';
 type TabType = 'sent' | 'received';
 
 const FollowUpRecordsPage: React.FC = () => {
+  const router = useRouter();
   const { followUpRecords } = useApp();
   const [tab, setTab] = useState<TabType>('sent');
 
-  const filtered = useMemo(
-    () => followUpRecords.filter((r) => r.direction === tab),
-    [followUpRecords, tab]
+  const recordId = useMemo(
+    () => router.params.recordId || undefined,
+    [router.params.recordId]
   );
 
-  const handleGoTrouble = (troubleId: string) => {
-    Taro.navigateTo({ url: `/pages/trouble-detail/index?troubleId=${troubleId}` });
+  const filtered = useMemo(() => {
+    let list = followUpRecords.filter((r) => r.direction === tab);
+    if (recordId) {
+      list = list.filter((r) => r.id === recordId);
+    }
+    return list;
+  }, [followUpRecords, tab, recordId]);
+
+  const handleGoDetail = (id: string) => {
+    Taro.navigateTo({ url: `/pages/follow-up-detail/index?recordId=${id}` });
   };
 
   return (
@@ -56,7 +65,7 @@ const FollowUpRecordsPage: React.FC = () => {
             <View
               key={record.id}
               className={styles.recordCard}
-              onClick={() => handleGoTrouble(record.troubleId)}
+              onClick={() => handleGoDetail(record.id)}
             >
               <View className={styles.cardHeader}>
                 <View className={classnames(styles.dirTag, styles[record.direction])}>
@@ -78,6 +87,13 @@ const FollowUpRecordsPage: React.FC = () => {
                 </Text>
               </View>
 
+              <View className={styles.responsePreview}>
+                <Text className={styles.previewLabel}>对方回复：</Text>
+                <Text className={styles.previewContent}>
+                  {record.responseContent}
+                </Text>
+              </View>
+
               <View className={styles.followUpContent}>
                 <Text className={styles.label}>回访内容：</Text>
                 <Text className={styles.content}>{record.content}</Text>
@@ -85,7 +101,7 @@ const FollowUpRecordsPage: React.FC = () => {
               </View>
 
               <View className={styles.cardFooter}>
-                <Text className={styles.link}>查看原烦恼 →</Text>
+                <Text className={styles.link}>查看详情 →</Text>
               </View>
             </View>
           ))}

@@ -101,9 +101,27 @@ export interface FollowUpRecord {
   troubleContent: string;
   responseId: string;
   responderName: string;
+  responderAvatar?: string;
+  responseContent: string;
   direction: 'sent' | 'received';
   content: string;
   mood: string;
+  createdAt: string;
+}
+
+export type InteractionType = 'help' | 'highRate' | 'followUp';
+
+export interface InteractionRecord {
+  id: string;
+  type: InteractionType;
+  troubleId: string;
+  troubleTheme: TroubleTheme;
+  troubleContent: string;
+  responseId?: string;
+  targetUserName: string;
+  targetUserAvatar?: string;
+  description: string;
+  rating?: number;
   createdAt: string;
 }
 

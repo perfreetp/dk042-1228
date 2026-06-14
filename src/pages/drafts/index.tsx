@@ -8,6 +8,7 @@ import EmptyState from '@/components/EmptyState';
 import { showModal, formatTime, getToneLabel } from '@/utils';
 
 type FilterMode = 'all' | 'segment' | 'full';
+type SortOrder = 'newest' | 'oldest';
 
 const PAGE_SIZE = 10;
 
@@ -15,6 +16,7 @@ const DraftsPage: React.FC = () => {
   const { drafts, deleteDraft } = useApp();
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState<FilterMode>('all');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
 
   const filteredDrafts = useMemo(() => {
     let list = [...drafts];
@@ -26,8 +28,18 @@ const DraftsPage: React.FC = () => {
     return list;
   }, [drafts, filter]);
 
-  const totalPages = Math.ceil(filteredDrafts.length / PAGE_SIZE);
-  const pagedDrafts = filteredDrafts.slice(0, page * PAGE_SIZE);
+  const sortedDrafts = useMemo(() => {
+    const list = [...filteredDrafts];
+    if (sortOrder === 'newest') {
+      list.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    } else {
+      list.sort((a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
+    }
+    return list;
+  }, [filteredDrafts, sortOrder]);
+
+  const totalPages = Math.ceil(sortedDrafts.length / PAGE_SIZE);
+  const pagedDrafts = sortedDrafts.slice(0, page * PAGE_SIZE);
   const hasMore = page < totalPages;
 
   const handleEdit = (draftId: string) => {
@@ -58,6 +70,11 @@ const DraftsPage: React.FC = () => {
     setPage(1);
   };
 
+  const handleSortChange = (newSort: SortOrder) => {
+    setSortOrder(newSort);
+    setPage(1);
+  };
+
   return (
     <ScrollView scrollY className={styles.page}>
       <View className={styles.header}>
@@ -66,29 +83,46 @@ const DraftsPage: React.FC = () => {
       </View>
 
       {drafts.length > 0 && (
-        <View className={styles.filterBar}>
-          <View
-            className={classnames(styles.filterItem, filter === 'all' && styles.active)}
-            onClick={() => handleFilterChange('all')}
-          >
-            全部 ({drafts.length})
+        <>
+          <View className={styles.filterBar}>
+            <View
+              className={classnames(styles.filterItem, filter === 'all' && styles.active)}
+              onClick={() => handleFilterChange('all')}
+            >
+              全部 ({drafts.length})
+            </View>
+            <View
+              className={classnames(styles.filterItem, filter === 'segment' && styles.active)}
+              onClick={() => handleFilterChange('segment')}
+            >
+              📋 分段 ({drafts.filter((d) => d.mode === 'segment').length})
+            </View>
+            <View
+              className={classnames(styles.filterItem, filter === 'full' && styles.active)}
+              onClick={() => handleFilterChange('full')}
+            >
+              ✏️ 自由 ({drafts.filter((d) => d.mode === 'full' || !d.mode).length})
+            </View>
           </View>
-          <View
-            className={classnames(styles.filterItem, filter === 'segment' && styles.active)}
-            onClick={() => handleFilterChange('segment')}
-          >
-            📋 分段 ({drafts.filter((d) => d.mode === 'segment').length})
+
+          <View className={styles.sortBar}>
+            <View
+              className={classnames(styles.sortItem, sortOrder === 'newest' && styles.active)}
+              onClick={() => handleSortChange('newest')}
+            >
+              最近编辑 ↓
+            </View>
+            <View
+              className={classnames(styles.sortItem, sortOrder === 'oldest' && styles.active)}
+              onClick={() => handleSortChange('oldest')}
+            >
+              最早编辑 ↑
+            </View>
           </View>
-          <View
-            className={classnames(styles.filterItem, filter === 'full' && styles.active)}
-            onClick={() => handleFilterChange('full')}
-          >
-            ✏️ 自由 ({drafts.filter((d) => d.mode === 'full' || !d.mode).length})
-          </View>
-        </View>
+        </>
       )}
 
-      {filteredDrafts.length === 0 ? (
+      {sortedDrafts.length === 0 ? (
         <EmptyState
           emoji="📝"
           title={filter === 'all' ? '暂无草稿' : `暂无${filter === 'segment' ? '分段模式' : '自由编辑模式'}草稿`}
@@ -146,7 +180,7 @@ const DraftsPage: React.FC = () => {
 
           {hasMore && (
             <View className={styles.loadMore} onClick={handleLoadMore}>
-              加载更多（还有 {filteredDrafts.length - pagedDrafts.length} 份草稿）
+              加载更多（还有 {sortedDrafts.length - pagedDrafts.length} 份草稿）
             </View>
           )}
         </View>

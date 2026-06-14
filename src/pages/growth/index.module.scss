@@ -325,6 +325,141 @@
     }
   }
 
+  .timelineSection {
+    margin-top: $spacing-lg;
+    margin-bottom: $spacing-lg;
+
+    .timelineEmpty {
+      background: $color-bg-card;
+      border-radius: $radius-lg;
+      padding: $spacing-xl $spacing-lg;
+      box-shadow: $shadow-card;
+      text-align: center;
+
+      .emptyEmoji {
+        font-size: 64rpx;
+        display: block;
+        margin-bottom: $spacing-md;
+      }
+
+      .emptyTitle {
+        font-size: $font-size-md;
+        font-weight: $font-weight-semibold;
+        color: $color-text-primary;
+        display: block;
+        margin-bottom: 6rpx;
+      }
+
+      .emptyDesc {
+        font-size: $font-size-xs;
+        color: $color-text-tertiary;
+      }
+    }
+
+    .timelineList {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .timelineCard {
+      display: flex;
+      background: $color-bg-card;
+      border-radius: $radius-lg;
+      padding: $spacing-lg;
+      margin-bottom: $spacing-md;
+      box-shadow: $shadow-card;
+      transition: all $transition-fast;
+
+      &:last-child {
+        margin-bottom: 0;
+
+        .timelineConnector {
+          display: none;
+        }
+      }
+
+      &:active {
+        background: $color-bg-hover;
+      }
+
+      .timelineLeft {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-right: $spacing-md;
+
+        .timelineIcon {
+          width: 64rpx;
+          height: 64rpx;
+          border-radius: $radius-round;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 28rpx;
+          flex-shrink: 0;
+        }
+
+        .timelineConnector {
+          width: 2rpx;
+          flex: 1;
+          min-height: 20rpx;
+          background: $color-border-light;
+          margin-top: $spacing-xs;
+        }
+      }
+
+      .timelineBody {
+        flex: 1;
+        min-width: 0;
+
+        .timelineHeader {
+          display: flex;
+          align-items: center;
+          gap: $spacing-sm;
+          margin-bottom: $spacing-sm;
+
+          .timelineTag {
+            font-size: $font-size-xs;
+            padding: 2rpx 14rpx;
+            border-radius: $radius-xs;
+            font-weight: $font-weight-medium;
+            flex-shrink: 0;
+          }
+
+          .timelineStars {
+            display: flex;
+            gap: 2rpx;
+
+            .timelineStar {
+              font-size: 20rpx;
+            }
+          }
+
+          .timelineTime {
+            margin-left: auto;
+            font-size: $font-size-xs;
+            color: $color-text-tertiary;
+            white-space: nowrap;
+            flex-shrink: 0;
+          }
+        }
+
+        .timelineDesc {
+          font-size: $font-size-sm;
+          color: $color-text-primary;
+          line-height: $line-height-normal;
+          display: block;
+          margin-bottom: 6rpx;
+        }
+
+        .timelineTheme {
+          font-size: $font-size-xs;
+          color: $color-text-tertiary;
+        }
+      }
+    }
+  }
+
   .praisedSection {
     margin-bottom: $spacing-lg;
 

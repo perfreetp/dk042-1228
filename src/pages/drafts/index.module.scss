@@ -29,7 +29,7 @@
   background: $color-bg-hover;
   border-radius: $radius-button;
   padding: 6rpx;
-  margin-bottom: $spacing-lg;
+  margin-bottom: $spacing-sm;
 
   .filterItem {
     flex: 1;
@@ -47,6 +47,34 @@
       color: $color-primary;
       font-weight: $font-weight-medium;
       box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+    }
+  }
+}
+
+.sortBar {
+  display: flex;
+  background: rgba($color-bg-hover, 0.6);
+  border-radius: $radius-button;
+  padding: 4rpx;
+  margin-bottom: $spacing-lg;
+  gap: 4rpx;
+
+  .sortItem {
+    flex: 1;
+    height: 56rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-button;
+    font-size: 20rpx;
+    color: $color-text-tertiary;
+    transition: all $transition-fast;
+
+    &.active {
+      background: $color-bg-card;
+      color: $color-primary;
+      font-weight: $font-weight-medium;
+      box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.04);
     }
   }
 }

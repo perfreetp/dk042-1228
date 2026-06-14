@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, Image, Button, ScrollView } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import classnames from 'classnames';
@@ -18,8 +18,10 @@ import {
 
 const TroubleDetailPage: React.FC = () => {
   const router = useRouter();
-  const id = router.params.id;
+  const troubleIdParam = router.params.troubleId;
+  const id = router.params.id || router.params.troubleId;
   const isMine = router.params.mine === '1';
+  const responseId = router.params.responseId || '';
 
   const {
     troubles,
@@ -37,6 +39,15 @@ const TroubleDetailPage: React.FC = () => {
     const all = [...myTroubles, ...troubles];
     return all.find((t) => t.id === id);
   }, [id, troubles, myTroubles]);
+
+  useEffect(() => {
+    if (responseId) {
+      Taro.pageScrollTo({
+        selector: `#response-${responseId}`,
+        duration: 300,
+      });
+    }
+  }, [responseId]);
 
   const [showAddAction, setShowAddAction] = useState(false);
   const [newActionInput, setNewActionInput] = useState('');
@@ -232,22 +243,23 @@ const TroubleDetailPage: React.FC = () => {
         />
       ) : (
         trouble.responses.map((r) => (
-          <ResponseCard
-            key={r.id}
-            response={r}
-            troubleId={trouble.id}
-            showRateAction={isOwner}
-            showFollowUp={isOwner && !trouble.isFollowedUp}
-            onRate={(rating) => handleRate(r.id, rating)}
-            onMarkUseful={(idx) => handleMarkUseful(r.id, idx)}
-            onFollowUp={() => handleFollowUp(r.id)}
-            onBlock={() =>
-              showModal('确认屏蔽', '屏蔽后将不再看到该用户的内容').then(
-                (confirm) => confirm && blockUser(r.userId)
-              )
-            }
-            onReport={() => handleReport('response', r.id)}
-          />
+          <View id={`response-${r.id}`} key={r.id}>
+            <ResponseCard
+              response={r}
+              troubleId={trouble.id}
+              showRateAction={isOwner}
+              showFollowUp={isOwner && !trouble.isFollowedUp}
+              onRate={(rating) => handleRate(r.id, rating)}
+              onMarkUseful={(idx) => handleMarkUseful(r.id, idx)}
+              onFollowUp={() => handleFollowUp(r.id)}
+              onBlock={() =>
+                showModal('确认屏蔽', '屏蔽后将不再看到该用户的内容').then(
+                  (confirm) => confirm && blockUser(r.userId)
+                )
+              }
+              onReport={() => handleReport('response', r.id)}
+            />
+          </View>
         ))
       )}
 

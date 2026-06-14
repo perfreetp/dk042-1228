@@ -58,8 +58,11 @@ const ResponseEditorPage: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [voiceDuration, setVoiceDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
   const recordingTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const playTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const initialized = useRef(false);
 
   useEffect(() => {
@@ -239,7 +242,7 @@ ${warnCount > 0 ? '建议优化后再发送，效果会更好哦～' : '全部�
         content: finalText || '[语音消息]',
         tone,
         isVoice,
-        voiceUrl: isVoice ? 'mock_voice.mp3' : undefined,
+        voiceUrl: isVoice ? (voiceUrl || 'mock_voice.mp3') : undefined,
         voiceDuration: isVoice ? voiceDuration : undefined,
       });
 
@@ -260,9 +263,46 @@ ${warnCount > 0 ? '建议优化后再发送，效果会更好哦～' : '全部�
     recordingTimer.current = setInterval(() => {
       setVoiceDuration((d) => d + 1);
     }, 1000);
+
+    audioChunksRef.current = [];
+
+    if (!navigator.mediaDevices) {
+      return;
+    }
+
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then((stream) => {
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          stream.getTracks().forEach((track) => track.stop());
+          const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          const url = URL.createObjectURL(blob);
+          setVoiceUrl(url);
+        };
+
+        mediaRecorder.start();
+      })
+      .catch(() => {
+        // Fallback: mock behavior continues with UI timer
+      });
   };
 
   const handleStopRecord = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      const stream = mediaRecorderRef.current.stream;
+      mediaRecorderRef.current.stop();
+      stream?.getTracks().forEach((track) => track.stop());
+      mediaRecorderRef.current = null;
+    }
+
     setIsRecording(false);
     if (recordingTimer.current) {
       clearInterval(recordingTimer.current);
@@ -271,6 +311,10 @@ ${warnCount > 0 ? '建议优化后再发送，效果会更好哦～' : '全部�
   };
 
   const handleDeleteVoice = () => {
+    if (voiceUrl) {
+      URL.revokeObjectURL(voiceUrl);
+    }
+    setVoiceUrl(null);
     setIsVoice(false);
     setVoiceDuration(0);
     setIsPlaying(false);
@@ -282,6 +326,17 @@ ${warnCount > 0 ? '建议优化后再发送，效果会更好哦～' : '全部�
 
   const handlePlayVoice = () => {
     if (isPlaying) return;
+    if (voiceUrl) {
+      const audio = new Audio(voiceUrl);
+      audio.onended = () => {
+        setIsPlaying(false);
+      };
+      setIsPlaying(true);
+      audio.play().catch(() => {
+        setIsPlaying(false);
+      });
+      return;
+    }
     setIsPlaying(true);
     playTimer.current = setTimeout(() => {
       setIsPlaying(false);

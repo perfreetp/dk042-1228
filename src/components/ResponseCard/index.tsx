@@ -13,6 +13,7 @@ interface ResponseCardProps {
   onMarkUseful?: (sentenceIndex: number) => void;
   showRateAction?: boolean;
   showFollowUp?: boolean;
+  showMoreActions?: boolean;
   onFollowUp?: () => void;
   onBlock?: () => void;
   onReport?: () => void;
@@ -25,6 +26,7 @@ const ResponseCard: React.FC<ResponseCardProps> = ({
   onMarkUseful,
   showRateAction = true,
   showFollowUp,
+  showMoreActions = true,
   onFollowUp,
   onBlock,
   onReport,
@@ -37,6 +39,17 @@ const ResponseCard: React.FC<ResponseCardProps> = ({
 
   const handlePlayVoice = () => {
     if (isPlaying) return;
+    if (response.voiceUrl && response.voiceUrl.startsWith('blob:')) {
+      const audio = new Audio(response.voiceUrl);
+      audio.onended = () => {
+        setIsPlaying(false);
+      };
+      setIsPlaying(true);
+      audio.play().catch(() => {
+        setIsPlaying(false);
+      });
+      return;
+    }
     setIsPlaying(true);
     setTimeout(() => setIsPlaying(false), (response.voiceDuration || 5) * 1000);
   };
@@ -48,6 +61,7 @@ const ResponseCard: React.FC<ResponseCardProps> = ({
   };
 
   const handleLongPress = () => {
+    if (!showMoreActions) return;
     Taro.showActionSheet({
       itemList: [
         '举报内容',
@@ -138,48 +152,50 @@ const ResponseCard: React.FC<ResponseCardProps> = ({
         </View>
       )}
 
-      <View className={styles.actions}>
-        <View className={styles.left}>
-          {showRateAction && (
-            <View
-              className={styles.rating}
-              onMouseLeave={() => setHoveredRating(0)}
-            >
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Text
-                  key={star}
-                  className={classnames(
-                    styles.star,
-                    (hoveredRating || currentRating) >= star && styles.active
-                  )}
-                  onClick={() => handleRate(star)}
-                  onTouchStart={() => setHoveredRating(star)}
-                >
-                  ⭐
-                </Text>
-              ))}
-            </View>
-          )}
-        </View>
+      {showMoreActions && (
+        <View className={styles.actions}>
+          <View className={styles.left}>
+            {showRateAction && (
+              <View
+                className={styles.rating}
+                onMouseLeave={() => setHoveredRating(0)}
+              >
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Text
+                    key={star}
+                    className={classnames(
+                      styles.star,
+                      (hoveredRating || currentRating) >= star && styles.active
+                    )}
+                    onClick={() => handleRate(star)}
+                    onTouchStart={() => setHoveredRating(star)}
+                  >
+                    ⭐
+                  </Text>
+                ))}
+              </View>
+            )}
+          </View>
 
-        <View style={{ display: 'flex', gap: '16rpx' }}>
-          {onMarkUseful && (
-            <View
-              className={classnames(
-                styles.actionBtn,
-                response.usefulSentences.length > 0 && styles.active
-              )}
-            >
-              💡 {response.usefulSentences.length > 0 ? '已标记' : '标记有用'}
-            </View>
-          )}
-          {showFollowUp && !response.hasFollowUp && (
-            <View className={styles.actionBtn} onClick={onFollowUp}>
-              🔄 回访
-            </View>
-          )}
+          <View style={{ display: 'flex', gap: '16rpx' }}>
+            {onMarkUseful && (
+              <View
+                className={classnames(
+                  styles.actionBtn,
+                  response.usefulSentences.length > 0 && styles.active
+                )}
+              >
+                💡 {response.usefulSentences.length > 0 ? '已标记' : '标记有用'}
+              </View>
+            )}
+            {showFollowUp && !response.hasFollowUp && (
+              <View className={styles.actionBtn} onClick={onFollowUp}>
+                🔄 回访
+              </View>
+            )}
+          </View>
         </View>
-      </View>
+      )}
 
       <Text style={{ display: 'none' }}>{troubleId}</Text>
     </View>
